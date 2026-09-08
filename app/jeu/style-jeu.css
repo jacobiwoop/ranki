@@ -42,8 +42,16 @@ body.jeu {
            calc(24px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
+
+/*
+ * La colonne occupe toute la hauteur pour que `.pied { margin-top: auto }`
+ * fasse son office : le bouton d'abandon se cale en bas d'écran au lieu de
+ * flotter sous la dernière proposition. Sans ce conteneur flex, la marge
+ * automatique n'a aucun espace à consommer et ne fait rien.
+ */
+.colonne { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
 
 /* ---------- Bandeau : quitter, gains acquis, échelle ---------- */
 
@@ -268,7 +276,7 @@ body.jeu {
 @media (min-width: 900px) {
   .plateau { max-width: 1060px; display: grid;
              grid-template-columns: 1fr 250px; gap: 34px; align-items: start; }
-  .colonne { display: flex; flex-direction: column; min-height: 92vh; }
+  .colonne { min-height: 92dvh; }
   .echelle {
     position: static; display: block; padding: 0;
     background: none; backdrop-filter: none;
@@ -356,12 +364,6 @@ body.jeu {
 
 /* ---------- L'échelle pendant la révélation ---------- */
 
-/*
- * Sur mobile l'échelle est un panneau plein écran ; pendant la révélation elle
- * doit laisser voir les boutons du bas, sinon on ne peut plus continuer.
- */
-.echelle.revelation { bottom: auto; max-height: 58vh; }
-
 .echelle li {
   transition: background .45s ease, color .45s ease, transform .3s ease;
 }
@@ -384,17 +386,22 @@ body.jeu {
   75%      { transform: translateX(5px); }
 }
 
-@media (min-width: 900px) {
-  .echelle.revelation { max-height: none; }
-}
-
 /*
- * Pendant la révélation, l'échelle occupe le haut et les deux boutons se
- * placent juste dessous. Sans cette règle, `.pied { margin-top: auto }` les
- * repousse en bas d'un écran devenu presque vide.
+ * Pendant la révélation, tout doit tenir dans la hauteur visible, sans
+ * ascenseur : l'échelle occupe la place restante et se comprime pour que ses
+ * quinze barreaux entrent, le verdict et les boutons restent en bas.
+ *
+ * `dvh` plutôt que `vh` : sur mobile, `vh` compte la barre d'adresse même
+ * quand elle est repliée, ce qui déborde de plusieurs dizaines de pixels et
+ * ramène précisément l'ascenseur qu'on cherche à supprimer.
  */
-.jeu.revelation .plateau { min-height: 0; }
-.jeu.revelation .pied { margin-top: 0; padding-top: 14px; }
+.jeu.revelation .plateau {
+  height: 100dvh; min-height: 0;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  gap: 4px;
+}
+.jeu.revelation .colonne { flex: 0 0 auto; min-height: 0; }
+.jeu.revelation .pied { margin-top: 0; padding-top: 10px; }
 /* `#palier` et non `.palier` : la classe désigne AUSSI les barreaux de
    sécurité de l'échelle, qu'on masquerait au passage — or ce sont justement
    ceux qu'il faut voir pendant la révélation. */
@@ -408,14 +415,33 @@ body.jeu {
    doit passer devant, sinon on lit le verdict avant de voir le déplacement. */
 .jeu.revelation .echelle { order: -1; }
 
-/* Le panneau reprend sa place dans le flux : plus d'énorme vide au-dessous. */
+/* Le panneau reprend sa place dans le flux et absorbe la hauteur disponible. */
 .echelle.revelation {
   position: static; inset: auto;
-  max-height: 62vh; overflow-y: auto;
-  padding: calc(14px + env(safe-area-inset-top)) 0 6px;
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;                 /* plus d'ascenseur : on comprime */
+  padding: 0;
   background: none; backdrop-filter: none;
 }
 .echelle.revelation .fermer { display: none; }
+
+.echelle.revelation ol {
+  flex: 1 1 auto; min-height: 0;
+  justify-content: space-evenly;    /* les barreaux se répartissent */
+}
+/*
+ * Les barreaux se resserrent quand l'écran est court. `clamp` avec une unité
+ * de hauteur laisse le navigateur ajuster tout seul : quinze lignes tiennent
+ * aussi bien sur un petit téléphone que sur un grand écran, sans point de
+ * rupture arbitraire.
+ */
+.echelle.revelation li {
+  flex: 0 1 auto;
+  padding: clamp(2px, .75vh, 9px) 16px;
+  font-size: clamp(12px, 1.75vh, 15.5px);
+}
+.echelle.revelation li .rang { font-size: clamp(10px, 1.45vh, 13px); }
 
 @media (min-width: 900px) {
   /* Sur grand écran l'échelle est déjà visible en permanence : rien à masquer,
@@ -427,5 +453,9 @@ body.jeu {
   .jeu.revelation .echelle { order: 0; }
   .jeu.revelation .propositions { display: grid; }
   .jeu.revelation .bandeau { display: flex; }
-  .echelle.revelation { max-height: none; overflow: visible; }
+  /* Sur grand écran la place ne manque pas : on rend aux barreaux leur taille. */
+  .jeu.revelation .plateau { height: auto; min-height: 100dvh; }
+  .echelle.revelation { overflow: visible; }
+  .echelle.revelation li { padding: 8px 16px; font-size: 15px; }
+  .echelle.revelation li .rang { font-size: 13px; }
 }
