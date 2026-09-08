@@ -33,6 +33,7 @@ export function creerVueReglages({ moteur, preferences, enregistreur, surChangem
 
   function dessiner() {
     const r = moteur.reglages;
+    const faites = moteur.nouvellesDuJour();
     const charge = chargePrevisionnelle([...moteur.progressions.values()], 14);
     const moyenne = charge.parJour.reduce((a, b) => a + b, 0) / 14;
     // Virgule décimale, et accord au singulier sous 2 : « 0,5 révision ».
@@ -51,7 +52,11 @@ export function creerVueReglages({ moteur, preferences, enregistreur, surChangem
         <p class="aide">Le seul vrai frein à la charge future : chaque carte
         découverte aujourd'hui engendre une dizaine de révisions dans les mois
         qui viennent. Actuellement ${moyenneTexte} par jour en moyenne sur les
-        deux prochaines semaines.</p>
+        deux prochaines semaines.
+        <br><b>${faites} découverte${faites > 1 ? 's' : ''} aujourd'hui</b>${
+        faites >= r.limiteNouvelles
+          ? ` — le quota est épuisé. Il faut passer au-delà de ${faites} pour en avoir d'autres dès maintenant.`
+          : ` : il en reste ${r.limiteNouvelles - faites} pour aujourd'hui.`}</p>
       </div>
 
       <div class="reglage">

@@ -543,3 +543,12 @@ pre {
   border: 1px solid var(--bord); border-radius: 9px;
 }
 .champ-duree .unite { font-size: 14px; color: var(--discret); }
+
+/* Pourquoi il n'y a rien à réviser : sans cette explication, un écran à zéro
+   ressemble à une panne, et l'on tourne le réglage au hasard sans effet. */
+.explication-vide {
+  margin: 14px 0 0; font-size: 14px; line-height: 1.55;
+  color: var(--discret); text-align: center;
+}
+.explication-vide b { color: var(--texte); }
+.carte-action.terne .bouton { margin-top: 14px; }

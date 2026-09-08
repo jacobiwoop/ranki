@@ -72,7 +72,8 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
           <div class="paire-boutons">
             <button class="bouton" data-lancer="du" data-mode="apprentissage">Apprentissage</button>
             <button class="bouton secondaire" data-lancer="du" data-mode="examen">Examen</button>
-          </div>` : ''}
+          </div>`
+        : pourquoiRienAFaire(neuves)}
       </div>
 
       <h3>Tes recueils</h3>
@@ -94,6 +95,9 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
         lancerSeance({ recueil: r.nom, section, inclureNonDues: true, mode });
       });
     });
+
+    racine.querySelector('#vers-rythme')
+      ?.addEventListener('click', () => rafraichirOnglets('reglages'));
 
     racine.querySelectorAll('.recueil-titre').forEach((t) => {
       t.addEventListener('click', () => {
@@ -117,6 +121,62 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
         if (!etaitOuverte) bloc.classList.add('ouverte');
       });
     });
+  }
+
+  /**
+   * Dire POURQUOI il n'y a rien à faire.
+   *
+   * « Rien à réviser » sans explication laisse croire à une panne. Deux causes
+   * bien distinctes se cachent derrière, et elles n'appellent pas du tout la
+   * même réaction :
+   *
+   *   - le quota de découvertes du jour est épuisé — augmenter la limite règle
+   *     le problème sur-le-champ ;
+   *   - tout est déjà su et replanifié — il n'y a qu'à revenir demain.
+   *
+   * Le cas le plus déroutant est celui où l'on a dépassé sa propre limite en
+   * bachotant une série : monter la limite de 20 à 40 ne change alors rien,
+   * puisqu'on en a déjà découvert 51. Sans le chiffre sous les yeux, c'est
+   * incompréhensible.
+   */
+  function pourquoiRienAFaire(neuves) {
+    const faites = moteur.nouvellesDuJour();
+    const limite = moteur.reglages.limiteNouvelles;
+
+    if (neuves > 0) {
+      const depasse = faites > limite;
+      return `<p class="explication-vide">
+        Tu as découvert <b>${faites} nouvelle${faites > 1 ? 's' : ''} question${faites > 1 ? 's' : ''}</b>
+        aujourd'hui${depasse
+          ? `, au-delà de ta limite de ${limite} — lancer une série ne la respecte pas.`
+          : `, c'est ta limite quotidienne.`}
+        <br>${neuves.toLocaleString('fr-FR')} attendent leur tour.
+        ${prochaine()}
+        </p>
+        <button class="bouton secondaire" id="vers-rythme">
+          ${depasse ? `Passer la limite au-delà de ${faites}` : 'Augmenter la limite du jour'}
+        </button>`;
+    }
+
+    return `<p class="explication-vide">
+      Toutes tes questions ont été vues au moins une fois. ${prochaine()}
+      </p>`;
+  }
+
+  /** Date de la prochaine échéance, en clair. */
+  function prochaine() {
+    const dates = [...moteur.progressions.values()]
+      .map((p) => p.prochaine).filter(Boolean).sort((a, b) => a - b);
+    if (dates.length === 0) return '';
+
+    const jour = new Date(dates[0]);
+    const minuitDemain = new Date().setHours(24, 0, 0, 0);
+    const quand = dates[0] < minuitDemain
+      ? `aujourd'hui à ${jour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+      : dates[0] < minuitDemain + 86_400_000
+        ? 'demain'
+        : `le ${jour.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+    return `<br>Prochaine révision ${quand}.`;
   }
 
   function ligneRecueil(r, index) {
