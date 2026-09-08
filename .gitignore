@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+*.log
+
+# Rien à construire ici : l'application est servie telle quelle.
+dist/
+.vercel/
+
+# Aucune clé d'API ne doit entrer dans le dépôt. Celle du jeu vit dans le
+# navigateur de l'utilisateur, jamais dans un fichier versionné.
+.env
+.env.*
+*.cle
+.cle*
+
+# Fichiers étrangers au projet, déposés là par accident.
+panda*.jpg
+image_generee.jpg

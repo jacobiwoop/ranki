@@ -1,0 +1,14 @@
+{
+  "name": "srs-moteur",
+  "version": "0.1.0",
+  "description": "Moteur de répétition espacée à notation déduite (sans auto-évaluation)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "expliquer": "node simulation/expliquer.js",
+    "simuler": "node simulation/simuler.js",
+    "balayage": "node simulation/balayage.js",
+    "start": "node serveur.js"
+  }
+}

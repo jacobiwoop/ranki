@@ -1,0 +1,16 @@
+{
+  "name": "Révisions",
+  "short_name": "Révisions",
+  "description": "Révision par QCM à répétition espacée, sans auto-évaluation.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1b1d",
+  "theme_color": "#1b1b1d",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icone-masquable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

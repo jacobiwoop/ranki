@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04091c">
+<title>Le Millionnaire</title>
+<link rel="icon" href="../icone.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style-jeu.css">
+</head>
+<body class="jeu">
+
+<div class="plateau">
+  <div class="colonne">
+
+    <div class="bandeau">
+      <button class="icone" id="quitter" title="Revenir à l'accueil">✕</button>
+      <div class="acquis">
+        <div class="libelle">Acquis</div>
+        <div class="montant" id="acquis">0 €</div>
+      </div>
+      <div class="chrono" id="chrono" hidden>
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="piste" cx="22" cy="22" r="19"></circle>
+          <circle class="jauge" id="jauge" cx="22" cy="22" r="19"></circle>
+        </svg>
+        <span id="secondes">20</span>
+      </div>
+      <button class="icone voir-echelle" id="voir-echelle" title="Voir l'échelle">☰</button>
+    </div>
+
+    <div class="jokers" id="jokers">
+      <button class="joker" data-joker="moitie">50:50</button>
+      <button class="joker" data-joker="changer" title="Changer de question">↻</button>
+      <button class="joker" data-joker="indice" title="Indice">💡</button>
+    </div>
+
+    <div class="palier" id="palier"></div>
+    <div class="question" id="question">Chargement…</div>
+    <div class="propositions" id="propositions"></div>
+
+    <div class="pied">
+      <div class="retour" id="retour"></div>
+      <div class="paire-jeu" id="suite" hidden>
+        <button class="bouton-jeu" id="continuer">Continuer</button>
+        <button class="bouton-jeu creux" id="pourquoi">Pourquoi ?</button>
+      </div>
+      <button class="arret" id="arret" hidden></button>
+    </div>
+  </div>
+
+  <nav class="echelle" id="echelle">
+    <ol id="barreaux"></ol>
+    <button class="fermer" id="fermer-echelle">Fermer</button>
+  </nav>
+</div>
+
+<script type="module" src="jeu.js"></script>
+</body>
+</html>

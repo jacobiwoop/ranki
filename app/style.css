@@ -1,0 +1,411 @@
+/* Feuille de style unique — pensée pour le pouce, sur un téléphone d'abord. */
+
+:root {
+  --fond: #fbfbfa;
+  --fond-carte: #ffffff;
+  --texte: #1a1a1a;
+  --discret: #6b6b6b;
+  --bord: #dcdcda;
+  --accent: #3b6fd4;
+  --accent-doux: #eaf0fc;
+  --juste: #2e9e5b;
+  --juste-doux: #eaf7ef;
+  --faux: #cf4b4b;
+  --faux-doux: #fcedec;
+  --partiel: #c98a1e;
+  --rayon: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #1b1b1d;
+    --fond-carte: #2a2a2c;
+    --texte: #e9e9e9;
+    --discret: #9a9a9a;
+    --bord: #3d3d40;
+    --accent: #6f9dee;
+    --accent-doux: #23304a;
+    --juste: #4fc27f;
+    --juste-doux: #1d3a29;
+    --faux: #e57373;
+    --faux-doux: #3f2424;
+    --partiel: #e0a94a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--texte);
+  background: var(--fond);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Ossature ---------- */
+
+#entete {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--fond);
+  border-bottom: 1px solid var(--bord);
+  padding-top: env(safe-area-inset-top);
+}
+
+#entete nav {
+  display: flex;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.onglet {
+  flex: 1;
+  padding: 14px 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--discret);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.onglet.actif { color: var(--accent); border-bottom-color: var(--accent); }
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+h2 { font-size: 20px; margin: 0 0 14px; }
+h3 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--discret); margin: 28px 0 10px;
+}
+
+.attente, .vide { color: var(--discret); text-align: center; padding: 40px 10px; }
+.vide strong { display: block; color: var(--texte); font-size: 19px; margin-bottom: 8px; }
+
+/* ---------- Boutons ---------- */
+
+.bouton {
+  display: block; width: 100%;
+  padding: 15px; margin-top: 14px;
+  font: inherit; font-weight: 600;
+  color: #fff; background: var(--accent);
+  border: none; border-radius: var(--rayon);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.bouton:disabled { opacity: .4; cursor: default; }
+.bouton.secondaire {
+  color: var(--texte); background: transparent; border: 1px solid var(--bord);
+}
+
+/* ---------- Accueil ---------- */
+
+.carte-action {
+  padding: 20px; margin-bottom: 10px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+  text-align: center;
+}
+.carte-action.terne { opacity: .6; }
+.carte-action .grand-compte { font-size: 46px; font-weight: 700; line-height: 1.05; }
+.carte-action .libelle { color: var(--discret); font-size: 14.5px; margin-top: 2px; }
+.carte-action .paire-boutons { margin-top: 16px; }
+
+.series { list-style: none; margin: 0; padding: 0; }
+.serie {
+  margin-bottom: 10px; padding: 13px 15px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.serie-titre {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  padding: 0; font: inherit; color: inherit;
+  background: none; border: none; cursor: pointer; text-align: left;
+}
+.serie-titre .nom { flex: 1; font-weight: 600; }
+.serie-titre .chiffres {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--discret); white-space: nowrap;
+}
+.pastille {
+  padding: 1px 8px; border-radius: 10px;
+  font-size: 12px; color: #fff; background: var(--accent);
+}
+.serie .piste {
+  height: 5px; margin-top: 9px; background: var(--bord);
+  border-radius: 3px; overflow: hidden;
+}
+.serie .piste > i { display: block; height: 100%; background: var(--juste); }
+
+/* Le détail ne se déploie qu'au clic sur la série : sur 10 séries, tout
+   afficher noierait l'écran. */
+.serie .detail { display: none; margin-top: 12px; font-size: 13.5px; color: var(--discret); }
+.serie.ouverte .detail { display: block; }
+.serie .detail .paire-boutons { margin-top: 10px; }
+.serie .detail .bouton { margin-top: 0; padding: 11px; font-size: 15px; }
+
+/* ---------- Recueils : le niveau au-dessus des séries ---------- */
+
+.recueils { list-style: none; margin: 0; padding: 0; }
+.recueil {
+  margin-bottom: 10px; padding: 14px 15px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.recueil-titre {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 0; font: inherit; color: inherit;
+  background: none; border: none; cursor: pointer; text-align: left;
+}
+.recueil-titre .nom { flex: 1; font-weight: 600; font-size: 16.5px; }
+.recueil-titre .chiffres {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--discret); white-space: nowrap;
+}
+/* Le chevron pivote : il dit d'un coup d'œil si le recueil est déplié. */
+.recueil-titre .chevron {
+  flex: none; color: var(--discret); font-size: 19px; line-height: 1;
+  transition: transform .18s ease;
+}
+.recueil.ouverte .recueil-titre .chevron { transform: rotate(90deg); }
+
+.recueil .piste {
+  height: 5px; margin-top: 10px; background: var(--bord);
+  border-radius: 3px; overflow: hidden;
+}
+.recueil .piste > i { display: block; height: 100%; background: var(--juste); }
+
+.recueil .detail { display: none; margin-top: 12px; }
+.recueil.ouverte .detail { display: block; }
+.recueil .detail .resume { font-size: 13.5px; color: var(--discret); }
+.recueil .detail > .paire-boutons { margin-top: 10px; }
+.recueil .detail .bouton { margin-top: 0; padding: 11px; font-size: 14.5px; }
+
+/* Les séries d'un recueil : décalées et allégées, pour que la hiérarchie se
+   lise sans avoir à compter les bordures. */
+.recueil .series { margin-top: 14px; padding-left: 12px; border-left: 2px solid var(--bord); }
+.recueil .series .serie {
+  margin-bottom: 8px; padding: 10px 12px;
+  background: none; border-color: transparent;
+}
+.recueil .series .serie:hover { border-color: var(--bord); }
+.recueil .series .serie-titre .nom { font-weight: 500; font-size: 15px; }
+
+/* ---------- Corrigé de fin d'examen ---------- */
+
+.corrige-item {
+  padding: 15px; margin-bottom: 12px;
+  border: 1px solid var(--bord); border-left-width: 4px;
+  border-radius: var(--rayon); background: var(--fond-carte);
+}
+.corrige-item.ok { border-left-color: var(--juste); }
+.corrige-item.ko { border-left-color: var(--faux); }
+.corrige-question { margin: 0 0 12px; font-weight: 600; }
+.corrige-item .option { padding: 9px 12px; margin-bottom: 6px; font-size: 15px; }
+
+/* ---------- Écran de révision ---------- */
+
+.progression {
+  height: 4px; background: var(--bord);
+  border-radius: 2px; overflow: hidden; margin-bottom: 22px;
+}
+.progression > i {
+  display: block; height: 100%; background: var(--accent);
+  transition: width .25s ease;
+}
+
+.compteur {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--discret); margin-bottom: 6px;
+}
+
+.question { font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+.consigne { font-size: 14px; color: var(--discret); margin: 0 0 18px; }
+
+.options { list-style: none; margin: 0; padding: 0; }
+
+.option {
+  display: flex; align-items: baseline; gap: 11px;
+  padding: 14px 15px; margin-bottom: 9px;
+  background: var(--fond-carte);
+  border: 1.5px solid var(--bord);
+  border-radius: var(--rayon);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .12s, background .12s;
+}
+.option .marque {
+  flex: 0 0 1.6em; text-align: center;
+  font-weight: 700; font-size: 14px; color: var(--discret);
+}
+.option .texte { flex: 1; }
+
+.option.choisie { border-color: var(--accent); background: var(--accent-doux); }
+.option.choisie .marque { color: var(--accent); }
+
+/* États révélés après validation */
+.options.figee .option { cursor: default; }
+.option.bonne { border-color: var(--juste); background: var(--juste-doux); }
+.option.bonne .marque { color: var(--juste); }
+.option.ratee { border-color: var(--faux); background: var(--faux-doux); }
+.option.ratee .marque { color: var(--faux); }
+.option.eteinte { opacity: .45; }
+
+.option .verdict { font-weight: 700; margin-left: auto; }
+.option.bonne .verdict { color: var(--juste); }
+.option.ratee .verdict { color: var(--faux); }
+
+/* ---------- Retour après réponse ---------- */
+
+.retour { margin-top: 20px; }
+
+.bandeau {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 15px; border-radius: var(--rayon);
+  font-weight: 600;
+}
+.bandeau.ok { color: var(--juste); background: var(--juste-doux); }
+.bandeau.ko { color: var(--faux); background: var(--faux-doux); }
+.bandeau.mitige { color: var(--partiel); background: var(--faux-doux); }
+.bandeau .note {
+  margin-left: auto; font-size: 13px; font-weight: 500; opacity: .85;
+}
+
+.explication {
+  margin-top: 12px; padding: 13px 15px;
+  background: var(--fond-carte); border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+}
+.source { margin-top: 10px; font-size: 13px; color: var(--discret); font-style: italic; }
+
+/* ---------- Bilan de séance ---------- */
+
+.bilan { text-align: center; padding: 30px 0; }
+.bilan .grand { font-size: 44px; font-weight: 700; line-height: 1.1; }
+.bilan .sous { color: var(--discret); margin-bottom: 26px; }
+
+/* ---------- Statistiques ---------- */
+
+.tuiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.tuile {
+  padding: 14px; background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.tuile .valeur { font-size: 26px; font-weight: 700; }
+.tuile .libelle { font-size: 13px; color: var(--discret); }
+
+.histo { display: flex; align-items: flex-end; gap: 3px; height: 90px; margin-top: 6px; }
+.histo > div {
+  flex: 1; min-height: 2px; background: var(--accent);
+  border-radius: 2px 2px 0 0; opacity: .75;
+}
+.histo-legende {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--discret); margin-top: 4px;
+}
+
+.barres { list-style: none; margin: 0; padding: 0; }
+.barres li { margin-bottom: 12px; }
+.barres .ligne { display: flex; justify-content: space-between; font-size: 14px; }
+.barres .piste {
+  height: 7px; margin-top: 5px; background: var(--bord);
+  border-radius: 4px; overflow: hidden;
+}
+.barres .piste > i { display: block; height: 100%; background: var(--accent); }
+.barres .piste > i.faible { background: var(--faux); }
+.barres .piste > i.moyen { background: var(--partiel); }
+
+/* ---------- Import ---------- */
+
+textarea {
+  width: 100%; min-height: 220px; padding: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px; line-height: 1.55;
+  color: var(--texte); background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+  resize: vertical;
+}
+
+.erreurs {
+  margin-top: 14px; padding: 12px 15px;
+  background: var(--faux-doux); border-radius: var(--rayon);
+  font-size: 14px;
+}
+.erreurs ul { margin: 8px 0 0; padding-left: 20px; }
+.erreurs li { margin-bottom: 4px; }
+
+.message { margin-top: 14px; padding: 12px 15px; border-radius: var(--rayon); font-size: 15px; }
+.message.ok { background: var(--juste-doux); color: var(--juste); }
+
+.paire-boutons { display: flex; gap: 10px; }
+.paire-boutons .bouton { flex: 1; }
+
+/* ---------- Réglages ---------- */
+
+.reglage { margin-bottom: 22px; }
+.reglage > label {
+  display: block; font-weight: 600; font-size: 15px; margin-bottom: 7px;
+}
+.reglage input[type="number"], .reglage select {
+  width: 100%; padding: 12px 13px;
+  font: inherit; font-size: 16px; /* 16px : empêche iOS de zoomer au focus */
+  color: var(--texte); background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.reglage .aide {
+  margin: 8px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--discret);
+}
+
+.interrupteur {
+  display: flex; align-items: center; gap: 11px;
+  font-weight: 600; font-size: 15px; cursor: pointer;
+}
+.interrupteur input { width: 21px; height: 21px; accent-color: var(--accent); }
+
+.bouton.danger { background: var(--faux); }
+
+details { margin-top: 22px; }
+summary { cursor: pointer; color: var(--discret); font-size: 14px; }
+pre {
+  margin-top: 10px; padding: 12px; overflow-x: auto;
+  font-size: 13px; line-height: 1.5;
+  background: var(--fond-carte); border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+}
+
+/* ---------- Progression d'une génération ---------- */
+
+.progression { margin: 14px 0; }
+.progression .jauge {
+  height: 8px; overflow: hidden;
+  background: var(--bord); border-radius: 999px;
+}
+.progression .jauge span {
+  display: block; height: 100%;
+  background: var(--accent); border-radius: 999px;
+  transition: width .3s ease-out;
+}
+.progression .legende {
+  margin-top: 7px; font-size: 13.5px; color: var(--discret);
+}
+
+.reglage input[type="password"], .reglage input[type="text"] {
+  width: 100%; padding: 11px 12px;
+  font: inherit; font-size: 15px;
+  color: var(--texte); background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: 10px;
+}
+
+/* `hidden` ne pose qu'un display:none de faible priorité, que .bouton
+   (display: block) écrase. Sans ce rappel, masquer en JS n'a aucun effet. */
+[hidden] { display: none !important; }

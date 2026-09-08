@@ -1,0 +1,83 @@
+// Fichier d'exemple du format .qcm
+// Les lignes commençant par // sont ignorées.
+
+# Réseau / Protocoles
+@tags réseau, ports
+
+Q: Quel port utilise HTTPS par défaut ?
+- 80
+- [x] 443
+- 8080
+- 22
+> 443/TCP est le port réservé à HTTP over TLS. Le 80 est le HTTP en clair,
+> le 22 le SSH, le 8080 un port HTTP alternatif sans valeur normative.
+@source Cours Réseau, chap. 3
+
+Q: Quelle couche du modèle OSI porte le protocole TCP ?
+- Couche 3 (réseau)
+- [x] Couche 4 (transport)
+- Couche 5 (session)
+- Couche 7 (application)
+> TCP assure le transport de bout en bout : segmentation, fiabilité, contrôle
+> de flux. La couche 3 (IP) ne fait que l'acheminement paquet par paquet.
+
+# Cryptographie
+@tags crypto
+
+Q: Parmi ces algorithmes, lesquels sont asymétriques ?
+- AES
+- [x] RSA
+- [x] ECDSA
+- SHA-256
+> RSA et ECDSA reposent sur une paire clé publique / clé privée. AES est un
+> chiffrement symétrique, SHA-256 une fonction de hachage — pas un chiffrement.
+@tags examen
+@source Cours Crypto, chap. 1
+
+Q: À quoi sert un sel (salt) dans le stockage des mots de passe ?
+- [x] Empêcher l'usage de tables précalculées
+- Chiffrer le mot de passe
+- Accélérer la vérification
+- Raccourcir l'empreinte stockée
+> Le sel, unique par utilisateur, rend chaque empreinte distincte même pour
+> deux mots de passe identiques. Il ne chiffre rien et n'accélère rien —
+> au contraire, on veut délibérément une fonction lente (bcrypt, Argon2).
+
+# Modèle OSI
+@tags réseau, osi
+
+// Question de type « ordre » : les puces numérotées donnent la bonne séquence.
+// À l'affichage, les propositions sont brassées et c'est le classement qui
+// est demandé. Barème « paires » par défaut : intervertir deux voisines coûte
+// peu, tout inverser donne zéro.
+Q: Classe les couches du modèle OSI, de la plus basse à la plus haute.
+1. Physique
+2. Liaison de données
+3. Réseau
+4. Transport
+5. Session
+6. Présentation
+7. Application
+> Moyen mnémotechnique : « Pour Le Réseau Tout Se Passe Automatiquement ».
+@source Cours Réseau, chap. 1
+
+// Ici on exige la séquence exacte : sur un enchaînement de protocole, une
+// étape déplacée change tout.
+Q: Remets dans l'ordre les étapes de la poignée de main TCP.
+@bareme strict
+1. SYN du client
+2. SYN-ACK du serveur
+3. ACK du client
+> Trois messages, d'où le nom de « three-way handshake ».
+
+# Web / HTTP
+@tags web, http
+
+Q: Que signifie un code HTTP 403 ?
+- La ressource n'existe pas
+- L'authentification est requise
+- [x] Le serveur a compris mais refuse d'autoriser
+- Le serveur a rencontré une erreur interne
+> 403 Forbidden : l'accès est refusé et se ré-authentifier n'y changera rien.
+> À distinguer du 401 Unauthorized, qui invite justement à s'authentifier.
+@source RFC 9110, section 15.5.4

@@ -1,0 +1,431 @@
+/*
+ * Identité visuelle du jeu — délibérément à l'opposé de l'app de révision.
+ *
+ * La révision est claire, plate, sans ombre : c'est un outil qu'on veut oublier
+ * en l'utilisant. Le jeu doit produire l'effet inverse — on doit sentir qu'on
+ * risque quelque chose. D'où le fond profond, l'or, les losanges, et une
+ * révélation qui prend son temps au lieu d'enchaîner.
+ */
+
+:root {
+  --nuit: #04091c;
+  --nuit-clair: #0c1637;
+  --bleu-vif: #143a8c;
+  --or: #f0b429;
+  --or-pale: #ffd97a;
+  --blanc: #f4f6ff;
+  --gris: #8b96b8;
+  --vert: #1db954;
+  --rouge: #e03131;
+}
+
+* { box-sizing: border-box; }
+
+body.jeu {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--blanc);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #1d3a7a 0%, transparent 60%),
+    radial-gradient(ellipse 90% 60% at 50% 110%, #14265c 0%, transparent 55%),
+    var(--nuit);
+  background-attachment: fixed;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plateau {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 16px
+           calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---------- Bandeau : quitter, gains acquis, échelle ---------- */
+
+.bandeau {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.bandeau .icone {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  font-size: 19px; color: var(--gris);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.bandeau .icone:hover { color: var(--blanc); border-color: rgba(255,255,255,.3); }
+
+.acquis {
+  flex: 1;
+  text-align: center;
+  line-height: 1.15;
+}
+.acquis .libelle {
+  font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--gris);
+}
+.acquis .montant {
+  font-size: 21px; font-weight: 700; color: var(--or);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Jokers ---------- */
+
+.jokers { display: flex; justify-content: center; gap: 14px; margin-bottom: 26px; }
+
+.joker {
+  width: 74px; height: 48px;
+  display: grid; place-items: center;
+  font-size: 15px; font-weight: 700; letter-spacing: .02em;
+  color: var(--or);
+  background: linear-gradient(180deg, rgba(240,180,41,.16), rgba(240,180,41,.04));
+  border: 1.5px solid rgba(240, 180, 41, .55);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .18s;
+}
+.joker:hover:not(.use) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(240, 180, 41, .35);
+}
+.joker.use {
+  color: #4a5170;
+  background: rgba(255, 255, 255, .03);
+  border-color: rgba(255, 255, 255, .09);
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+/* Une barre en travers : un joker consommé doit se voir d'un coup d'œil. */
+.joker.use::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom right,
+    transparent 47%, #4a5170 47%, #4a5170 53%, transparent 53%);
+}
+
+/* ---------- Question ---------- */
+
+.palier {
+  text-align: center;
+  font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 10px;
+}
+.palier b { color: var(--or); font-weight: 700; letter-spacing: .06em; }
+
+.question {
+  position: relative;
+  padding: 26px 22px;
+  margin-bottom: 22px;
+  text-align: center;
+  font-size: 19px; font-weight: 600; line-height: 1.4;
+  background: linear-gradient(180deg, var(--nuit-clair), #060d24);
+  border: 1.5px solid rgba(240, 180, 41, .3);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* ---------- Propositions ---------- */
+
+.propositions { display: grid; gap: 11px; }
+
+.prop {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%;
+  padding: 15px 18px;
+  font: inherit; font-size: 16.5px; text-align: left;
+  color: var(--blanc);
+  background: linear-gradient(180deg, #101c42, #070f28);
+  border: 1.5px solid #2a3a70;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .1s, border-color .15s, background .15s;
+}
+.prop:hover:not(.eteinte):not(.verrou) {
+  border-color: var(--or);
+  background: linear-gradient(180deg, #16255a, #0a1436);
+  transform: translateY(-1px);
+}
+
+.prop .lettre {
+  flex: none;
+  width: 26px;
+  font-weight: 700; color: var(--or);
+  font-size: 16px;
+}
+.prop .texte { flex: 1; }
+
+.prop.juste {
+  background: linear-gradient(180deg, #12833c, #0a5827);
+  border-color: var(--vert);
+  animation: eclat .45s ease-out 3;
+}
+.prop.fausse {
+  background: linear-gradient(180deg, #9e2020, #6b1414);
+  border-color: var(--rouge);
+}
+@keyframes eclat {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.45); }
+}
+
+/* Éliminée par le 50/50 : on la garde en place, sinon les lettres bougent. */
+.prop.eteinte { opacity: .18; cursor: default; }
+.prop.eteinte .texte { text-decoration: line-through; }
+
+.prop.verrou { cursor: default; }
+
+/* ---------- Pied ---------- */
+
+.pied { margin-top: auto; padding-top: 22px; }
+
+.arret {
+  display: block; width: 100%;
+  padding: 13px;
+  font: inherit; font-size: 15px; font-weight: 600;
+  color: var(--gris);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.arret:hover { color: var(--or); border-color: rgba(240, 180, 41, .5); }
+.arret b { color: var(--or); }
+
+.retour {
+  min-height: 26px;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14.5px;
+  color: var(--gris);
+}
+.retour .titre { display: block; font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.retour.ok .titre { color: var(--vert); }
+.retour.ko .titre { color: var(--rouge); }
+
+/* ---------- L'échelle des gains ---------- */
+
+.echelle {
+  position: fixed; inset: 0; z-index: 50;
+  display: none;
+  padding: calc(20px + env(safe-area-inset-top)) 16px 20px;
+  background: rgba(2, 5, 16, .96);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+.echelle.ouverte { display: block; }
+.echelle ol {
+  max-width: 420px; margin: 0 auto; padding: 0;
+  list-style: none;
+  display: flex; flex-direction: column-reverse; /* 15 en haut, 1 en bas */
+}
+.echelle li {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 16px;
+  font-size: 15px;
+  color: var(--gris);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+/* `nowrap` : sans lui « 10 » se coupe en « 1 0 » dans 22 px. */
+.echelle li .rang {
+  width: 24px; text-align: right; opacity: .6; font-size: 13px;
+  white-space: nowrap; flex: none;
+}
+.echelle li .somme { flex: 1; text-align: right; font-weight: 600; }
+
+/* Un palier de sécurité : ce qui est acquis même en cas d'erreur. */
+.echelle li.palier { color: var(--blanc); }
+.echelle li.palier .somme { color: var(--or); }
+.echelle li.franchi { color: rgba(240, 180, 41, .55); }
+.echelle li.courant {
+  color: #1a1200;
+  background: linear-gradient(90deg, var(--or), var(--or-pale));
+  font-weight: 700;
+}
+.echelle li.courant .rang, .echelle li.courant .somme { color: #1a1200; opacity: 1; }
+
+.echelle .fermer {
+  display: block; margin: 22px auto 0; padding: 11px 34px;
+  font: inherit; color: var(--gris);
+  background: none; border: 1px solid rgba(255,255,255,.16); border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ---------- Grand écran : l'échelle reste visible en permanence ---------- */
+
+@media (min-width: 900px) {
+  .plateau { max-width: 1060px; display: grid;
+             grid-template-columns: 1fr 250px; gap: 34px; align-items: start; }
+  .colonne { display: flex; flex-direction: column; min-height: 92vh; }
+  .echelle {
+    position: static; display: block; padding: 0;
+    background: none; backdrop-filter: none;
+    margin-top: 52px;
+  }
+  .echelle .fermer, .bandeau .icone.voir-echelle { display: none; }
+}
+
+/* ---------- Chronomètre ---------- */
+
+.chrono {
+  position: relative; flex: none;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--or);
+}
+.chrono svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.chrono circle { fill: none; stroke-width: 3; }
+.chrono .piste { stroke: rgba(255, 255, 255, .1); }
+.chrono .jauge {
+  stroke: var(--or); stroke-linecap: round;
+  transition: stroke-dasharray .1s linear, stroke .3s;
+}
+
+/* Les dix dernières secondes doivent se voir sans qu'on ait à lire le nombre. */
+.chrono.alerte { color: #ffb020; }
+.chrono.alerte .jauge { stroke: #ffb020; }
+.chrono.urgent { color: var(--rouge); animation: pulse .6s ease-in-out infinite; }
+.chrono.urgent .jauge { stroke: var(--rouge); }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+
+/* ---------- Bilan de fin de partie ---------- */
+
+.bilan-rate {
+  padding: 14px 16px;
+  text-align: left;
+  background: rgba(224, 49, 49, .08);
+  border: 1px solid rgba(224, 49, 49, .32);
+  border-left-width: 3px;
+  border-radius: 10px;
+}
+.bilan-q { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+.bilan-r { font-size: 14.5px; color: var(--or); margin-bottom: 6px; }
+.bilan-e { font-size: 13.5px; line-height: 1.5; color: var(--gris); }
+
+/*
+ * L'attribut `hidden` ne pose qu'un `display: none` de faible priorité, que
+ * n'importe quelle règle d'auteur écrase — .chrono a `display: grid`, .arret
+ * a `display: block`. Sans ce rappel, masquer un élément en JavaScript n'a
+ * tout simplement aucun effet visible.
+ */
+[hidden] { display: none !important; }
+
+/* ---------- Après la réponse : continuer ou comprendre ---------- */
+
+.paire-jeu { display: flex; gap: 11px; }
+
+.bouton-jeu {
+  flex: 1;
+  padding: 14px;
+  font: inherit; font-size: 16px; font-weight: 700;
+  color: #1a1200;
+  background: linear-gradient(180deg, var(--or-pale), var(--or));
+  border: none; border-radius: 999px;
+  cursor: pointer;
+}
+.bouton-jeu.creux {
+  flex: 0 0 40%;
+  color: var(--gris);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+.bouton-jeu.creux:hover { color: var(--or); border-color: rgba(240, 180, 41, .5); }
+
+.retour .explication {
+  display: block; margin-top: 4px;
+  text-align: left; line-height: 1.55; color: var(--gris);
+}
+
+/* ---------- L'échelle pendant la révélation ---------- */
+
+/*
+ * Sur mobile l'échelle est un panneau plein écran ; pendant la révélation elle
+ * doit laisser voir les boutons du bas, sinon on ne peut plus continuer.
+ */
+.echelle.revelation { bottom: auto; max-height: 58vh; }
+
+.echelle li {
+  transition: background .45s ease, color .45s ease, transform .3s ease;
+}
+.echelle li.courant.monte    { animation: monte .55s ease-out; }
+.echelle li.courant.descend  { animation: descend .55s ease-out; }
+.echelle li.courant.reste    { animation: retenu .7s ease-out; }
+
+@keyframes monte {
+  0%   { transform: translateY(14px) scale(.94); opacity: .4; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes descend {
+  0%   { transform: translateY(-14px) scale(.94); opacity: .4; }
+  100% { transform: none; opacity: 1; }
+}
+/* Retenu par un palier : on secoue au lieu de glisser — rien n'a bougé. */
+@keyframes retenu {
+  0%, 100% { transform: none; }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+
+@media (min-width: 900px) {
+  .echelle.revelation { max-height: none; }
+}
+
+/*
+ * Pendant la révélation, l'échelle occupe le haut et les deux boutons se
+ * placent juste dessous. Sans cette règle, `.pied { margin-top: auto }` les
+ * repousse en bas d'un écran devenu presque vide.
+ */
+.jeu.revelation .plateau { min-height: 0; }
+.jeu.revelation .pied { margin-top: 0; padding-top: 14px; }
+/* `#palier` et non `.palier` : la classe désigne AUSSI les barreaux de
+   sécurité de l'échelle, qu'on masquerait au passage — or ce sont justement
+   ceux qu'il faut voir pendant la révélation. */
+.jeu.revelation .bandeau,
+.jeu.revelation .jokers,
+.jeu.revelation #palier,
+.jeu.revelation .question,
+.jeu.revelation .propositions { display: none; }
+
+/* L'échelle est après la colonne dans le document ; pendant la révélation elle
+   doit passer devant, sinon on lit le verdict avant de voir le déplacement. */
+.jeu.revelation .echelle { order: -1; }
+
+/* Le panneau reprend sa place dans le flux : plus d'énorme vide au-dessous. */
+.echelle.revelation {
+  position: static; inset: auto;
+  max-height: 62vh; overflow-y: auto;
+  padding: calc(14px + env(safe-area-inset-top)) 0 6px;
+  background: none; backdrop-filter: none;
+}
+.echelle.revelation .fermer { display: none; }
+
+@media (min-width: 900px) {
+  /* Sur grand écran l'échelle est déjà visible en permanence : rien à masquer,
+     la colonne de gauche garde la question et les propositions révélées. */
+  .jeu.revelation .bandeau,
+  .jeu.revelation #palier,
+  .jeu.revelation .question,
+  .jeu.revelation .propositions { display: revert; }
+  .jeu.revelation .echelle { order: 0; }
+  .jeu.revelation .propositions { display: grid; }
+  .jeu.revelation .bandeau { display: flex; }
+  .echelle.revelation { max-height: none; overflow: visible; }
+}

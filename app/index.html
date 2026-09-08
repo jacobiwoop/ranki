@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1b1d">
+<title>Révisions</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="entete">
+  <nav>
+    <button data-vue="accueil" class="onglet actif">Accueil</button>
+    <button data-vue="stats" class="onglet">Progrès</button>
+    <button data-vue="jeu" class="onglet">Jeu</button>
+    <button data-vue="reglages" class="onglet" aria-label="Réglages">Réglages</button>
+  </nav>
+</header>
+
+<main id="vue"><p class="attente">Chargement…</p></main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
