@@ -251,21 +251,27 @@ export function creerVueRevision({ moteur, preferences, enregistreur, rafraichir
       retour.appendChild(src);
     }
 
-    // Le bouton est TOUJOURS présent, même sur une bonne réponse : c'est le
-    // moment où l'on lit l'explication, et rien ne doit l'escamoter.
+    /*
+     * On attend TOUJOURS un appui, y compris sur une bonne réponse.
+     *
+     * Un enchaînement automatique existait, réglable à 0,8 ou 1,6 seconde. Il
+     * a été retiré pour deux raisons. La première est un bug : le clic qui
+     * validait la réponse remontait jusqu'au conteneur et déclenchait
+     * lui-même le passage à la suite — l'explication n'apparaissait pas une
+     * seule image, alors qu'un délai était censé la laisser lire.
+     *
+     * La seconde tient à la conception, et elle suffirait seule : une
+     * explication fait sept cents signes, on ne la lit pas en huit dixièmes de
+     * seconde. Un réglage qui escamote le retour vide le mode apprentissage de
+     * son objet — c'est précisément là que l'apprentissage a lieu, pas dans le
+     * fait d'avoir coché juste.
+     */
     const suivant = document.createElement('button');
     suivant.className = 'bouton';
     suivant.id = 'suivant';
     suivant.textContent = session.restantes > 0 ? 'Suivant' : 'Voir le bilan';
     suivant.addEventListener('click', afficher);
     retour.appendChild(suivant);
-
-    // Accélérateur facultatif, désactivé par défaut : seulement sur une
-    // réponse juste, jamais sur une erreur.
-    if (parfait && preferences.delaiEnchainementMs > 0) {
-      minuteur = setTimeout(afficher, preferences.delaiEnchainementMs);
-      racine.addEventListener('click', afficher, { once: true });
-    }
   }
 
   function ajouterVerdict(li, signe) {

@@ -10,7 +10,7 @@
  * IndexedDB et sont donc disponibles hors ligne par construction.
  */
 
-const CACHE = 'revisions-v10';
+const CACHE = 'revisions-v11';
 
 /*
  * `addAll` est atomique : un seul fichier manquant fait échouer l'installation

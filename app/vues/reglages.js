@@ -96,16 +96,6 @@ export function creerVueReglages({ moteur, preferences, enregistreur, surChangem
         deuxième » au lieu du contenu, et l'illusion s'effondre le jour de l'examen.</p>
       </div>
 
-      <div class="reglage">
-        <label for="delai">Après une bonne réponse</label>
-        <select id="delai">
-          <option value="0" ${preferences.delaiEnchainementMs === 0 ? 'selected' : ''}>Attendre un appui</option>
-          <option value="850" ${preferences.delaiEnchainementMs === 850 ? 'selected' : ''}>Enchaîner vite (0,8 s)</option>
-          <option value="1600" ${preferences.delaiEnchainementMs === 1600 ? 'selected' : ''}>Enchaîner après une pause (1,6 s)</option>
-        </select>
-        <p class="aide">Une réponse fausse attend toujours ton appui : c'est le
-        moment où l'explication compte.</p>
-      </div>
 
       <div id="retour-reglages">${message}</div>
 
@@ -125,10 +115,6 @@ export function creerVueReglages({ moteur, preferences, enregistreur, surChangem
     lier('#ordre', 'change', (e) => appliquer({ ordre: e.target.value }));
     lier('#melanger', 'change', (e) => {
       preferences.melangerPropositions = e.target.checked;
-      sauver();
-    });
-    lier('#delai', 'change', (e) => {
-      preferences.delaiEnchainementMs = Number(e.target.value);
       sauver();
     });
     lier('#effacer', 'click', effacerTout);

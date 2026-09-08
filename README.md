@@ -30,7 +30,7 @@ certificat.
 | *(séance)* | La révision. Trois interactions selon le type de question. |
 | **Progrès** | Rétention, charge à venir, maîtrise par thème, fiabilité des prévisions. |
 | **Jeu** | « Le Millionnaire » : préparation des questions, puis la partie. |
-| **Réglages** | Import `.qcm`, sauvegarde, rythme, rétention, affichage. |
+| **Réglages** | Import `.qcm`, prompt de génération, sauvegarde, rythme, rétention, affichage. |
 
 ### Deux façons de travailler
 
@@ -59,7 +59,10 @@ tourne le réglage sans effet visible.
 ### Deux modes
 
 - **Apprentissage** — après chaque réponse : la correction, l'explication, puis
-  « Suivant ». Y compris sur une bonne réponse : rien n'escamote le retour.
+  « Suivant ». Y compris sur une bonne réponse — c'est là que l'apprentissage a
+  lieu, pas dans le fait d'avoir coché juste. Aucun enchaînement automatique :
+  une explication de sept cents signes ne se lit pas en huit dixièmes de
+  seconde.
 - **Examen** — aucun retour pendant la série. Le score et le corrigé complet
   (ta réponse, la bonne, l'explication) arrivent à la fin. Une carte ratée n'est
   pas reproposée en cours de route : un examen ne repose pas deux fois la même
