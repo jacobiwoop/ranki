@@ -10,7 +10,7 @@
  * IndexedDB et sont donc disponibles hors ligne par construction.
  */
 
-const CACHE = 'revisions-v4';
+const CACHE = 'revisions-v5';
 
 /*
  * `addAll` est atomique : un seul fichier manquant fait échouer l'installation
@@ -25,6 +25,7 @@ const RESSOURCES = [
   './app.js',
   './stockage.js',
   './preferences.js',
+  './prompt-qcm.js',
   './vues/accueil.js',
   './vues/revision.js',
   './vues/stats.js',

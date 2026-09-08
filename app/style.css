@@ -463,3 +463,24 @@ pre {
 /* Chaque vue garde son conteneur ; changer d'onglet masque l'un et montre
    l'autre, sans reconstruire. */
 .panneau { display: block; }
+
+/* ---------- Fabriquer un .qcm avec une IA ---------- */
+
+.fabrique { margin-top: 20px; }
+.fabrique summary {
+  padding: 4px 0;
+  font-size: 14.5px; font-weight: 600; color: var(--accent);
+}
+.fabrique .aide { margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--discret); }
+.fabrique .bouton { margin-top: 12px; }
+
+/* Repli quand le presse-papiers n'est pas accessible : on montre le texte,
+   déjà sélectionné, plutôt qu'un bouton qui échoue en silence. */
+.prompt-repli {
+  width: 100%; height: 190px; margin-top: 12px; padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.45;
+  color: var(--texte); background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+  resize: vertical;
+}

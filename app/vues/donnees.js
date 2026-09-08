@@ -16,6 +16,7 @@
  */
 
 import { analyser } from '../../src/parseur.js';
+import { PROMPT_QCM } from '../prompt-qcm.js';
 
 export function creerSectionDonnees({ moteur, enregistreur }) {
   let racine = null;
@@ -35,6 +36,16 @@ export function creerSectionDonnees({ moteur, enregistreur }) {
 
       <div id="retour-donnees">${message}</div>
 
+      <details class="fabrique">
+        <summary>Je n'ai pas de fichier .qcm</summary>
+        <p class="aide">Fais-en un à partir de tes cours, avec l'IA de ton
+        choix. Copie le prompt ci-dessous, colle-le dans ta conversation, puis
+        joins ton document. Tu récupères le texte produit dans un fichier
+        <b>.qcm</b> et tu l'importes ici.</p>
+        <button class="bouton secondaire" id="copier-prompt">Copier le prompt</button>
+        <p class="aide" id="apercu-prompt"></p>
+      </details>
+
       <h3>Sauvegarde</h3>
       <p class="consigne">Tes données ne quittent jamais cet appareil. Pour passer
       du téléphone au PC, exporte ici et réimporte là-bas.</p>
@@ -50,6 +61,35 @@ export function creerSectionDonnees({ moteur, enregistreur }) {
     sur('#exporter', 'click', exporter);
     sur('#restaurer', 'click', () => racine.querySelector('#choisir-sauvegarde').click());
     sur('#choisir-sauvegarde', 'change', restaurer);
+    sur('#copier-prompt', 'click', copierPrompt);
+    racine.querySelector('#apercu-prompt').textContent =
+      `${Math.round(PROMPT_QCM.length / 100) / 10} k caractères — le format y est décrit en entier, `
+      + 'les règles qui font échouer un import comprises.';
+  }
+
+  /**
+   * Copie le prompt dans le presse-papiers.
+   *
+   * `navigator.clipboard` exige une origine sécurisée : sur une page servie en
+   * HTTP simple depuis une adresse IP, il est absent. On retombe alors sur une
+   * zone de texte sélectionnée, que l'utilisateur copie lui-même — mieux vaut
+   * un geste de plus qu'un bouton qui ne fait rien.
+   */
+  async function copierPrompt(evenement) {
+    const bouton = evenement.currentTarget;
+    try {
+      await navigator.clipboard.writeText(PROMPT_QCM);
+      bouton.textContent = '✓ Copié — colle-le dans ton IA, puis joins ton document';
+      setTimeout(() => { bouton.textContent = 'Copier le prompt'; }, 4000);
+    } catch {
+      const zone = document.createElement('textarea');
+      zone.className = 'prompt-repli';
+      zone.readOnly = true;
+      zone.value = PROMPT_QCM;
+      bouton.replaceWith(zone);
+      zone.focus();
+      zone.select();
+    }
   }
 
   async function importerFichier(evenement) {
