@@ -59,6 +59,7 @@ export function creerVueRevision({ moteur, preferences, enregistreur, rafraichir
       carte,
       moteur.progression(carte.id).nbRevisions,
       preferences.melangerPropositions,
+      session.graine,
     );
     choix = [];
     changements = 0;

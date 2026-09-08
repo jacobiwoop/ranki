@@ -91,11 +91,26 @@ describe('mélange des propositions', () => {
     assert.deepEqual(propositions.map((p) => p.texte), ['443', '80', '22', '8080']);
   });
 
-  it('deux cartes différentes ne subissent pas le même mélange', () => {
-    const autre = { ...carte, id: 'zzz999' };
-    const a = preparerAffichage(carte, 0).propositions.map((p) => p.texte).join('|');
-    const b = preparerAffichage(autre, 0).propositions.map((p) => p.texte).join('|');
-    assert.notEqual(a, b);
+  it('l\'identifiant de la carte entre dans le mélange', () => {
+    // Comparer DEUX cartes serait un test de chance : avec quatre
+    // propositions il n'existe que 24 permutations, deux identifiants
+    // quelconques ont donc une chance sur 24 de coïncider. On regarde
+    // plutôt si l'identifiant fait varier quelque chose du tout.
+    const ordres = new Set(
+      Array.from({ length: 12 }, (_, i) => preparerAffichage({ ...carte, id: `c${i}` }, 0)
+        .propositions.map((p) => p.texte).join('|')),
+    );
+    assert.ok(ordres.size > 4, `seulement ${ordres.size} ordres distincts sur 12 cartes`);
+  });
+
+  it('la graine de séance rebrasse une carte jamais répondue', () => {
+    // Sans elle, `tour` reste à 0 tant qu'on n'a pas répondu : relancer la même
+    // série reproposait exactement le même ordre de propositions.
+    const ordres = new Set(
+      [1, 2, 3, 4, 5, 6, 7, 8].map((g) => preparerAffichage(carte, 0, true, g)
+        .propositions.map((p) => p.texte).join('|')),
+    );
+    assert.ok(ordres.size > 3, `seulement ${ordres.size} ordres distincts sur 8 séances`);
   });
 
   it('mélanger un tableau vide ou d\'un élément ne plante pas', () => {

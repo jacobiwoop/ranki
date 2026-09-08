@@ -172,3 +172,45 @@ describe('session', () => {
     assert.equal(s.avancer(true), null);
   });
 });
+
+describe('brassage de la séance', () => {
+  const carte = (i) => ({ id: `c${i}`, section: 'S', propositions: [{}, {}] });
+  const cartes = Array.from({ length: 30 }, (_, i) => carte(i));
+
+  it('les cartes neuves ne sortent pas dans l\'ordre du fichier', () => {
+    // Toutes ont la même urgence : sans brassage, un tri les laisse telles
+    // quelles et l'on finit par retenir la SUITE plutôt que le contenu.
+    const file = construireFile({
+      cartes, progressions: new Map(), maintenant: 1000, inclureNonDues: true,
+    });
+    assert.notDeepEqual(file.map((c) => c.id), cartes.map((c) => c.id));
+  });
+
+  it('deux séances successives ne posent pas le même ordre', () => {
+    const opts = { cartes, progressions: new Map(), inclureNonDues: true };
+    const a = construireFile({ ...opts, maintenant: 1000 }).map((c) => c.id);
+    const b = construireFile({ ...opts, maintenant: 2000 }).map((c) => c.id);
+    assert.notDeepEqual(a, b);
+  });
+
+  it('le brassage ne perd ni n\'ajoute aucune carte', () => {
+    const file = construireFile({
+      cartes, progressions: new Map(), maintenant: 1000, inclureNonDues: true,
+    });
+    assert.deepEqual(
+      file.map((c) => c.id).sort(),
+      cartes.map((c) => c.id).sort(),
+    );
+  });
+
+  it('l\'urgence prime toujours sur le brassage', () => {
+    // Une carte au bord de l'oubli doit passer devant, quel que soit le hasard.
+    const progressions = new Map(cartes.map((c, i) => [c.id, {
+      id: c.id, prochaine: 0, derniereRevision: 0, nbRevisions: 1,
+      // La dernière carte du fichier est la plus fragile.
+      etat: { stabilite: i === 29 ? 0.1 : 500, difficulte: 5 },
+    }]));
+    const file = construireFile({ cartes, progressions, maintenant: 5 * 86_400_000 });
+    assert.equal(file[0].id, 'c29', 'la carte la plus proche de l\'oubli doit venir en tête');
+  });
+});

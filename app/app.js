@@ -82,6 +82,8 @@ async function afficherVue(nom, { forcer = false } = {}) {
   onglets.forEach((o) => o.classList.toggle('actif', o.dataset.vue === nom));
   nomCourant = nom;
 
+  empiler(nom);
+
   const vue = vues[nom];
   if (!cible.dataset.monte) {
     cible.dataset.monte = '1';
@@ -111,6 +113,33 @@ function rafraichirOnglets(cible) {
 
 onglets.forEach((o) => o.addEventListener('click', () => afficherVue(o.dataset.vue)));
 
+/*
+ * Le bouton « retour » du téléphone.
+ *
+ * Sans historique, il quitte l'application dès le premier appui — même au
+ * milieu d'une séance. On empile donc une entrée par onglet visité : le retour
+ * ramène à l'onglet précédent, et ne sort qu'une fois revenu au point de
+ * départ. C'est ce qu'attend n'importe quel utilisateur d'Android.
+ *
+ * `remonte` évite la boucle : restaurer un onglet depuis l'historique ne doit
+ * pas y réempiler une entrée.
+ */
+let remonte = false;
+
+function empiler(nom) {
+  if (remonte) return;
+  const etat = history.state;
+  if (etat?.vue === nom) return;
+  history.pushState({ vue: nom }, '', `#${nom}`);
+}
+
+window.addEventListener('popstate', (e) => {
+  const nom = e.state?.vue;
+  if (!nom || !vues[nom]) return;
+  remonte = true;
+  afficherVue(nom).finally(() => { remonte = false; });
+});
+
 // Une application mobile peut être tuée sans préavis dès qu'elle passe en
 // arrière-plan : on vide la file d'écriture à ce moment précis.
 document.addEventListener('visibilitychange', () => {
@@ -123,7 +152,9 @@ window.addEventListener('pagehide', () => {
 });
 
 // Sans carte, il n'y a rien à réviser : on ouvre les réglages, où vit l'import.
-await afficherVue(moteur.cartes.length === 0 ? 'reglages' : 'accueil');
+const depart = moteur.cartes.length === 0 ? 'reglages' : 'accueil';
+history.replaceState({ vue: depart }, '', `#${depart}`);
+await afficherVue(depart);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')

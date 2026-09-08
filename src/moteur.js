@@ -144,7 +144,7 @@ export class Moteur {
       recueil,
       inclureNonDues,
     });
-    this.session = new Session(file, this.reglages, mode);
+    this.session = new Session(file, this.reglages, mode, maintenant);
     return this.session;
   }
 

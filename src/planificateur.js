@@ -104,18 +104,31 @@ export function construireFile({
     else if (inclureNonDues || estDue(p, maintenant)) dues.push(carte);
   }
 
-  if (reglages.ordre === 'aleatoire') {
-    // Graine dérivée du jour : l'ordre est brassé, mais identique tout au long
-    // de la journée. Reprendre une séance interrompue ne rebat pas les cartes.
-    dues.splice(0, dues.length,
-      ...melanger(dues, Math.floor(maintenant / JOUR_MS)));
-  } else {
-    dues.sort((a, b) =>
+  /*
+   * Toute séance est brassée avant d'être ordonnée.
+   *
+   * Sans cela, une série lancée deux fois de suite posait exactement les mêmes
+   * questions dans exactement le même ordre : les cartes jamais vues ont toutes
+   * la même urgence, un tri les laisse donc dans l'ordre du fichier. On finit
+   * par retenir la SUITE plutôt que le contenu — le même piège que les
+   * propositions toujours à la même place.
+   *
+   * La graine dépend de l'instant, donc chaque lancement diffère. Aucune séance
+   * n'est reprise en cours de route : elle n'est pas enregistrée, une
+   * interruption la recommence de toute façon.
+   */
+  const graine = reglages.graine ?? maintenant;
+  const brasses = melanger(dues, graine);
+
+  if (reglages.ordre !== 'aleatoire') {
+    // Tri stable APRÈS brassage : à urgence égale — le cas de toutes les
+    // cartes neuves — l'ordre reste celui du brassage, pas celui du fichier.
+    brasses.sort((a, b) =>
       risque(progressions.get(a.id), maintenant) - risque(progressions.get(b.id), maintenant));
   }
 
-  const revisions = dues.slice(0, limiteRevisions);
-  const nouvelles = neuves.slice(0, limiteNouvelles);
+  const revisions = brasses.slice(0, limiteRevisions);
+  const nouvelles = melanger(neuves, graine + 1).slice(0, limiteNouvelles);
   if (nouvelles.length === 0) return revisions;
   if (revisions.length === 0) return nouvelles;
 
@@ -146,9 +159,11 @@ export class Session {
    *   En examen, une carte ratée n'est PAS réinjectée : un examen ne repose
    *   pas deux fois la même question, et le corrigé n'arrive qu'à la fin.
    */
-  constructor(file, reglages = REGLAGES_PLAN, mode = 'apprentissage') {
+  constructor(file, reglages = REGLAGES_PLAN, mode = 'apprentissage', graine = 0) {
     this.reglages = reglages;
     this.mode = mode;
+    /** Distingue deux séances : sert à rebrasser les propositions. */
+    this.graine = graine;
     this.file = [...file];
     this.position = 0;
     this.reprises = 0;

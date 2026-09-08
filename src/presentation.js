@@ -55,23 +55,26 @@ export const LETTRES = 'ABCDEFGH';
  * @param {object} carte
  * @param {number} tour   numéro de passage (progression.nbRevisions)
  * @param {boolean} melange  passer false pour conserver l'ordre du fichier
+ * @param {number} variante  graine propre à la séance. Sans elle, une carte
+ *   jamais répondue garde son tour à 0 et donc le MÊME ordre de propositions
+ *   d'un lancement à l'autre : brassé une fois, puis figé.
  * @returns {{propositions: object[], bonnes: number[], lettres: string}}
  *   propositions : dans l'ordre à afficher, chacune enrichie de sa lettre et
  *   de son rang d'origine dans le fichier (utile pour les corrections).
  */
-export function preparerAffichage(carte, tour = 0, melange = true) {
+export function preparerAffichage(carte, tour = 0, melange = true, variante = 0) {
   const rangs = carte.propositions.map((_, i) => i);
   const estOrdre = carte.type === 'ordre';
 
   let ordre = rangs;
   if (melange) {
-    ordre = melanger(rangs, graineDepuis(`${carte.id}:${tour}`));
+    ordre = melanger(rangs, graineDepuis(`${carte.id}:${tour}:${variante}`));
     // Sur une question de classement, tomber sur l'ordre d'origine donnerait
     // la réponse toute faite. On retire alors avec une autre graine.
     let essai = 0;
     while (estOrdre && rangs.length > 1
            && ordre.every((r, i) => r === i) && essai < 8) {
-      ordre = melanger(rangs, graineDepuis(`${carte.id}:${tour}:${++essai}`));
+      ordre = melanger(rangs, graineDepuis(`${carte.id}:${tour}:${variante}:${++essai}`));
     }
   }
 

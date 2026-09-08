@@ -21,9 +21,18 @@
 
 * { box-sizing: border-box; }
 
+/*
+ * Le jeu ne défile jamais.
+ *
+ * Une question chronométrée qu'il faut faire défiler pour lire ses quatre
+ * propositions est injouable : on perd des secondes à chercher ce qui est
+ * en dessous. Tout doit donc tenir dans la hauteur visible, quitte à ce que
+ * les éléments se resserrent.
+ */
 body.jeu {
   margin: 0;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--blanc);
   background:
@@ -42,7 +51,7 @@ body.jeu {
            calc(24px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
 }
 
 /*
@@ -89,10 +98,14 @@ body.jeu {
 
 /* ---------- Jokers ---------- */
 
-.jokers { display: flex; justify-content: center; gap: 14px; margin-bottom: 26px; }
+.jokers {
+  display: flex; justify-content: center; gap: 14px;
+  flex: 0 0 auto;
+  margin-bottom: clamp(12px, 2.6vh, 26px);
+}
 
 .joker {
-  width: 74px; height: 48px;
+  width: 74px; height: clamp(38px, 5.4vh, 48px);
   display: grid; place-items: center;
   font-size: 15px; font-weight: 700; letter-spacing: .02em;
   color: var(--or);
@@ -134,10 +147,11 @@ body.jeu {
 
 .question {
   position: relative;
-  padding: 26px 22px;
-  margin-bottom: 22px;
+  flex: 0 1 auto; min-height: 0; overflow-y: auto;
+  padding: clamp(14px, 2.4vh, 26px) 22px;
+  margin-bottom: clamp(10px, 2vh, 22px);
   text-align: center;
-  font-size: 19px; font-weight: 600; line-height: 1.4;
+  font-size: clamp(15px, 2.3vh, 19px); font-weight: 600; line-height: 1.35;
   background: linear-gradient(180deg, var(--nuit-clair), #060d24);
   border: 1.5px solid rgba(240, 180, 41, .3);
   border-radius: 14px;
@@ -146,13 +160,19 @@ body.jeu {
 
 /* ---------- Propositions ---------- */
 
-.propositions { display: grid; gap: 11px; }
+.propositions {
+  display: grid; gap: clamp(6px, 1.2vh, 11px);
+  flex: 0 1 auto; min-height: 0;
+  /* Seule exception au « pas de défilement » : le bilan de fin de partie liste
+     toutes les erreurs, et il n'est plus chronométré. */
+  overflow-y: auto;
+}
 
 .prop {
   display: flex; align-items: center; gap: 14px;
   width: 100%;
-  padding: 15px 18px;
-  font: inherit; font-size: 16.5px; text-align: left;
+  padding: clamp(9px, 1.6vh, 15px) 18px;
+  font: inherit; font-size: clamp(14px, 2vh, 16.5px); text-align: left;
   color: var(--blanc);
   background: linear-gradient(180deg, #101c42, #070f28);
   border: 1.5px solid #2a3a70;
@@ -196,7 +216,7 @@ body.jeu {
 
 /* ---------- Pied ---------- */
 
-.pied { margin-top: auto; padding-top: 22px; }
+.pied { flex: 0 0 auto; margin-top: auto; padding-top: clamp(10px, 2vh, 22px); }
 
 .arret {
   display: block; width: 100%;
