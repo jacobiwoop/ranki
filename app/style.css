@@ -184,11 +184,20 @@ h3 {
 }
 .recueil .piste > i { display: block; height: 100%; background: var(--juste); }
 
-.recueil .detail { display: none; margin-top: 12px; }
-.recueil.ouverte .detail { display: block; }
-.recueil .detail .resume { font-size: 13.5px; color: var(--discret); }
-.recueil .detail > .paire-boutons { margin-top: 10px; }
+/* `>` et non un sélecteur descendant : sans lui, ouvrir un recueil déplierait
+   du même coup le détail de chacune de ses séries — quatorze chapitres, trente
+   boutons identiques, et plus rien de lisible. */
+.recueil > .detail { display: none; margin-top: 12px; }
+.recueil.ouverte > .detail { display: block; }
+.recueil > .detail > .resume { font-size: 13.5px; color: var(--discret); }
+.recueil > .detail > .paire-boutons { margin-top: 10px; }
 .recueil .detail .bouton { margin-top: 0; padding: 11px; font-size: 14.5px; }
+
+/* Une série ouverte se démarque : c'est la seule de la liste, l'accordéon
+   referme les autres. */
+.recueil .series .serie.ouverte {
+  background: var(--fond); border-color: var(--bord);
+}
 
 /* Les séries d'un recueil : décalées et allégées, pour que la hiérarchie se
    lise sans avoir à compter les bordures. */
@@ -383,20 +392,22 @@ pre {
   border-radius: var(--rayon);
 }
 
-/* ---------- Progression d'une génération ---------- */
+/* ---------- Avancement d'une génération ----------
+   Nom distinct de `.progression`, qui désigne déjà la barre fine de l'écran de
+   révision : réutiliser la classe lui aurait imposé un height de 4 px. */
 
-.progression { margin: 14px 0; }
-.progression .jauge {
+.avancement { margin: 14px 0; }
+.avancement .jauge {
   height: 8px; overflow: hidden;
   background: var(--bord); border-radius: 999px;
 }
-.progression .jauge span {
+.avancement .jauge span {
   display: block; height: 100%;
   background: var(--accent); border-radius: 999px;
   transition: width .3s ease-out;
 }
-.progression .legende {
-  margin-top: 7px; font-size: 13.5px; color: var(--discret);
+.avancement .legende {
+  margin-top: 7px; font-size: 13.5px; line-height: 1.45; color: var(--discret);
 }
 
 .reglage input[type="password"], .reglage input[type="text"] {
@@ -409,3 +420,46 @@ pre {
 /* `hidden` ne pose qu'un display:none de faible priorité, que .bouton
    (display: block) écrase. Sans ce rappel, masquer en JS n'a aucun effet. */
 [hidden] { display: none !important; }
+
+/* ---------- Journal de génération ---------- */
+
+.journal {
+  max-height: 260px; overflow-y: auto;
+  margin: 12px 0 4px; padding: 6px;
+  font-size: 13px; line-height: 1.4;
+  background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.jrn {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 5px 8px; border-radius: 7px;
+  color: var(--discret);
+}
+.jrn .marque { flex: none; width: 13px; text-align: center; }
+.jrn .txt { flex: 1; overflow-wrap: anywhere; }
+.jrn .chiffre {
+  flex: none; font-variant-numeric: tabular-nums; font-size: 12.5px;
+}
+
+.jrn.encours { color: var(--texte); background: var(--accent-doux); }
+.jrn.fini .marque { color: var(--juste); }
+.jrn.echec { color: var(--faux); background: var(--faux-doux); }
+.jrn.ok { color: var(--juste); font-weight: 600; }
+.jrn.stop { color: var(--partiel); font-weight: 600; }
+
+/* Un bloc en cours tourne : sans mouvement, on ne distingue pas une requête
+   lente d'une application figée. */
+.tourne { display: inline-block; animation: tourner 1.1s linear infinite; }
+@keyframes tourner { to { transform: rotate(360deg); } }
+
+.message.attention {
+  color: var(--partiel);
+  background: color-mix(in srgb, var(--partiel) 12%, transparent);
+  border-color: var(--partiel);
+}
+
+/* ---------- Onglets persistants ---------- */
+
+/* Chaque vue garde son conteneur ; changer d'onglet masque l'un et montre
+   l'autre, sans reconstruire. */
+.panneau { display: block; }

@@ -262,7 +262,7 @@ function versQuestions(enrichi, carte) {
 export async function enrichir(cartes, options) {
   const {
     cle, modele = MODELE_DEFAUT, taille = 20, parallele = 4,
-    signal, surBloc, surErreur,
+    signal, surDebut, surBloc, surErreur,
   } = options;
   if (!cle) throw new Error('Clé absente.');
 
@@ -270,21 +270,41 @@ export async function enrichir(cartes, options) {
   const blocs = [];
   for (let i = 0; i < cartes.length; i += taille) blocs.push(cartes.slice(i, i + taille));
 
+  /** Sections couvertes par un bloc, pour dire à l'utilisateur où l'on en est. */
+  const sectionsDe = (bloc) => [...new Set(bloc.map((c) => c.section || 'Sans série'))];
+
+  const debut = Date.now();
   let faits = 0;
+  surDebut?.({ blocs: blocs.length, total: cartes.length, taille, parallele, modele });
+
   for (let i = 0; i < blocs.length; i += parallele) {
     if (signal?.aborted) break;
-    await Promise.all(blocs.slice(i, i + parallele).map(async (bloc) => {
+    await Promise.all(blocs.slice(i, i + parallele).map(async (bloc, j) => {
+      const numero = i + j + 1;
+      const t0 = Date.now();
+      surBloc?.({
+        etat: 'encours', numero, taille: bloc.length,
+        sections: sectionsDe(bloc), faits, total: cartes.length,
+      });
       try {
         const enrichis = await traiterBloc(bloc, { cle, modele, signal });
         const questions = enrichis
           .filter((e) => parId.has(e.id))
           .flatMap((e) => versQuestions(e, parId.get(e.id)));
         faits += bloc.length;
-        surBloc?.({ questions, faits, total: cartes.length });
+        surBloc?.({
+          etat: 'fini', numero, taille: bloc.length, sections: sectionsDe(bloc),
+          questions, faits, total: cartes.length,
+          ms: Date.now() - t0, msTotal: Date.now() - debut,
+        });
       } catch (e) {
         if (e.name === 'AbortError') return;
         faits += bloc.length;
-        surErreur?.({ erreur: e.message, faits, total: cartes.length });
+        surErreur?.({
+          etat: 'echec', numero, taille: bloc.length, sections: sectionsDe(bloc),
+          erreur: e.message, faits, total: cartes.length,
+          ms: Date.now() - t0, msTotal: Date.now() - debut,
+        });
       }
     }));
   }

@@ -112,5 +112,5 @@ export function creerVueStats({ moteur }) {
       </li>`;
   }
 
-  return { monter, demonter() {} };
+  return { monter, reprendre: () => racine && dessiner() };
 }

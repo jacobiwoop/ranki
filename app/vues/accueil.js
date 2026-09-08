@@ -107,8 +107,18 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
       });
     });
 
+    /*
+     * Accordéon : une seule série ouverte à la fois. Sur un recueil de quatorze
+     * chapitres, laisser tous les boutons visibles produit une page de trente
+     * boutons identiques où l'on ne trouve plus rien.
+     */
     racine.querySelectorAll('.serie-titre').forEach((t) => {
-      t.addEventListener('click', () => t.closest('.serie').classList.toggle('ouverte'));
+      t.addEventListener('click', () => {
+        const bloc = t.closest('.serie');
+        const etaitOuverte = bloc.classList.contains('ouverte');
+        racine.querySelectorAll('.serie.ouverte').forEach((s) => s.classList.remove('ouverte'));
+        if (!etaitOuverte) bloc.classList.add('ouverte');
+      });
     });
   }
 
@@ -161,5 +171,10 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
       </li>`;
   }
 
-  return { monter, demonter() {} };
+  /*
+   * Au retour sur l'onglet, les compteurs ont pu changer — une séance vient
+   * peut-être de se terminer. On redessine, mais `ouverts` survit : on
+   * retrouve ses recueils dépliés comme on les avait laissés.
+   */
+  return { monter, reprendre: () => racine && dessiner() };
 }

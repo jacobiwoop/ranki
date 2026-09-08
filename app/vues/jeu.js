@@ -100,6 +100,7 @@ export function creerVueJeu({ moteur }) {
       </div>
 
       <div id="progression">${progression}</div>
+      <div id="journal" class="journal" ${enCours ? '' : 'hidden'}></div>
 
       <div class="paire-boutons">
         <button class="bouton" id="generer" ${sources === 0 || enCours ? 'disabled' : ''}>
@@ -150,29 +151,97 @@ export function creerVueJeu({ moteur }) {
     enCours = new AbortController();
     const deja = new Set((etat.banque ?? []).map((q) => q.id));
     const erreurs = [];
-    dessiner(barre(0, cartes.length, 0));
+    const debut = Date.now();
+    let nbBlocs = 0;
+    dessiner(barre(0, cartes.length, etat.banque.length, [], debut));
+
+    const tracer = (evenement) => journaliser(evenement);
 
     await enrichir(cartes, {
       cle,
       modele: MODELE_DEFAUT,
       signal: enCours.signal,
-      surBloc: async ({ questions, faits, total }) => {
-        // On écrit à chaque bloc : une coupure ne doit pas gâcher ce qui est payé.
-        for (const q of questions) if (!deja.has(q.id)) { deja.add(q.id); etat.banque.push(q); }
-        await ecrire(etat);
-        majProgression(barre(faits, total, etat.banque.length, erreurs));
+      surDebut: ({ blocs, taille, parallele, modele }) => {
+        nbBlocs = blocs;
+        journaliser({ etat: 'info', texte:
+          `${cartes.length} question${cartes.length > 1 ? 's' : ''} · `
+          + `${blocs} bloc${blocs > 1 ? 's' : ''} de ${taille} · `
+          + `${parallele} en parallèle · ${modele}` });
       },
-      surErreur: ({ erreur, faits, total }) => {
-        erreurs.push(erreur);
-        majProgression(barre(faits, total, etat.banque.length, erreurs));
+      surBloc: async (e) => {
+        if (e.etat === 'encours') { tracer(e); return; }
+        // On écrit à chaque bloc : une coupure ne doit pas gâcher ce qui est payé.
+        for (const q of e.questions) if (!deja.has(q.id)) { deja.add(q.id); etat.banque.push(q); }
+        await ecrire(etat);
+        tracer({ ...e, produites: e.questions.length });
+        majProgression(barre(e.faits, e.total, etat.banque.length, erreurs, debut, nbBlocs));
+      },
+      surErreur: (e) => {
+        erreurs.push(e.erreur);
+        tracer(e);
+        majProgression(barre(e.faits, e.total, etat.banque.length, erreurs, debut, nbBlocs));
       },
     });
 
     const interrompu = enCours?.signal.aborted;
     enCours = null;
-    dessiner(`<div class="message ok">${interrompu ? 'Arrêté' : 'Terminé'} —
-      ${etat.banque.length.toLocaleString('fr-FR')} questions prêtes.</div>`
-      + (erreurs.length ? blocErreurs(erreurs) : ''));
+    const secondes = Math.round((Date.now() - debut) / 1000);
+    journaliser({ etat: interrompu ? 'stop' : 'ok',
+      texte: `${interrompu ? 'Arrêté' : 'Terminé'} en ${duree(secondes)} · `
+        + `${etat.banque.length.toLocaleString('fr-FR')} questions prêtes` });
+
+    const trace = racine.querySelector('#journal')?.innerHTML ?? '';
+    dessiner(`<div class="message ${erreurs.length ? 'attention' : 'ok'}">
+      ${interrompu ? 'Arrêté' : 'Terminé'} —
+      ${etat.banque.length.toLocaleString('fr-FR')} questions prêtes en ${duree(secondes)}.</div>`);
+    const zone = racine.querySelector('#journal');
+    if (zone) { zone.innerHTML = trace; zone.hidden = false; }
+  }
+
+  const duree = (s) => (s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`);
+
+  /**
+   * Journal des blocs — la transparence demandée.
+   *
+   * Une barre de progression seule ne dit pas ce qui se passe : on ignore si
+   * l'attente vient d'un bloc lent, d'un nouvel essai après un refus, ou d'un
+   * blocage. Chaque bloc écrit donc son entrée, mise à jour sur place quand il
+   * aboutit, avec sa durée et ce qu'il a produit.
+   */
+  function journaliser(e) {
+    const zone = racine.querySelector('#journal');
+    if (!zone) return;
+    zone.hidden = false;
+
+    if (e.etat === 'info' || e.etat === 'ok' || e.etat === 'stop') {
+      zone.insertAdjacentHTML('afterbegin',
+        `<div class="jrn ${e.etat}"><span class="marque">${
+          e.etat === 'info' ? '·' : e.etat === 'ok' ? '✓' : '■'}</span>
+         <span class="txt">${echapper(e.texte)}</span></div>`);
+      return;
+    }
+
+    const cle = `bloc-${e.numero}`;
+    const sections = e.sections.join(', ');
+    const corps = e.etat === 'encours'
+      ? `<span class="marque tourne">◌</span>
+         <span class="txt">Bloc ${e.numero} · ${e.taille} question${e.taille > 1 ? 's' : ''} · ${echapper(sections)}</span>
+         <span class="chiffre">en cours…</span>`
+      : e.etat === 'fini'
+        ? `<span class="marque">✓</span>
+           <span class="txt">Bloc ${e.numero} · ${echapper(sections)}</span>
+           <span class="chiffre">+${e.produites} · ${(e.ms / 1000).toFixed(1)} s</span>`
+        : `<span class="marque">✗</span>
+           <span class="txt">Bloc ${e.numero} · ${echapper(e.erreur)}</span>
+           <span class="chiffre">${(e.ms / 1000).toFixed(1)} s</span>`;
+
+    const existant = zone.querySelector(`[data-bloc="${cle}"]`);
+    const classe = `jrn ${e.etat}`;
+    if (existant) { existant.className = classe; existant.innerHTML = corps; }
+    else {
+      zone.insertAdjacentHTML('afterbegin',
+        `<div class="${classe}" data-bloc="${cle}">${corps}</div>`);
+    }
   }
 
   /** Mise à jour ciblée : redessiner effacerait la clé en cours de saisie. */
@@ -181,13 +250,24 @@ export function creerVueJeu({ moteur }) {
     if (zone) zone.innerHTML = html;
   }
 
-  function barre(faits, total, produites, erreurs = []) {
+  function barre(faits, total, produites, erreurs = [], debut = null, nbBlocs = 0) {
     const part = total ? Math.round((faits / total) * 100) : 0;
-    return `<div class="progression">
+    // Estimation du reste, à partir du rythme observé. Sans repère de temps,
+    // une barre à 12 % ne dit pas s'il faut attendre trente secondes ou dix
+    // minutes — et c'est précisément ce qu'on veut savoir avant de partir.
+    let temps = '';
+    if (debut && faits > 0) {
+      const ecoule = (Date.now() - debut) / 1000;
+      const reste = Math.round((ecoule / faits) * (total - faits));
+      temps = ` · ${duree(Math.round(ecoule))} écoulées`
+        + (faits < total ? `, ~${duree(reste)} restantes` : '');
+    }
+    return `<div class="avancement">
       <div class="jauge"><span style="width:${part}%"></span></div>
-      <div class="legende">${faits} / ${total} questions traitées ·
+      <div class="legende">${part} % — ${faits} / ${total} question${total > 1 ? 's' : ''} ·
         ${produites.toLocaleString('fr-FR')} produites${
-        erreurs.length ? ` · <b>${erreurs.length} bloc(s) en échec</b>` : ''}</div>
+        nbBlocs > 1 ? ` · ${Math.ceil(faits / 20)}/${nbBlocs} blocs` : ''}${temps}${
+        erreurs.length ? ` · <b>${erreurs.length} bloc${erreurs.length > 1 ? 's' : ''} en échec</b>` : ''}</div>
     </div>`;
   }
 
@@ -232,5 +312,18 @@ export function creerVueJeu({ moteur }) {
     dessiner();
   }
 
-  return { monter, demonter };
+  /*
+   * Au retour sur l'onglet, on se remet à jour — SAUF pendant une génération :
+   * redessiner effacerait la barre et le journal, et perdrait le fil d'une
+   * opération qui dure plusieurs minutes.
+   */
+  return {
+    monter,
+    reprendre: async () => {
+      if (enCours || !racine) return;
+      etat = (await lire()) ?? ETAT_VIDE;
+      dessiner();
+    },
+    demonter,
+  };
 }

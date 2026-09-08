@@ -179,7 +179,7 @@ export function creerVueReglages({ moteur, preferences, enregistreur, surChangem
     location.reload();
   }
 
-  return { monter, demonter() {} };
+  return { monter, reprendre: () => racine && dessiner() };
 }
 
 export { PREFERENCES_DEFAUT };
