@@ -31,8 +31,12 @@ export function creerSectionDonnees({ moteur, enregistreur }) {
     racine.innerHTML = `
       <h3>Questions</h3>
       <p class="consigne">${nb} question${nb > 1 ? 's' : ''} en mémoire.</p>
-      <button class="bouton secondaire" id="fichier">Importer un fichier .qcm…</button>
+      <div class="paire-boutons">
+        <button class="bouton secondaire" id="fichier">Importer un fichier .qcm…</button>
+        <button class="bouton secondaire" id="verifier">Vérifier sans importer…</button>
+      </div>
       <input type="file" id="choisir" accept=".qcm,.txt,text/plain" hidden>
+      <input type="file" id="choisir-verif" accept=".qcm,.txt,text/plain" hidden>
 
       <div id="retour-donnees">${message}</div>
 
@@ -55,13 +59,18 @@ export function creerSectionDonnees({ moteur, enregistreur }) {
       </div>
       <input type="file" id="choisir-sauvegarde" accept=".json,application/json" hidden>`;
 
-    const sur = (sel, ev, fn) => racine.querySelector(sel).addEventListener(ev, fn);
+    // `?.` : plusieurs de ces éléments n'existent que dans certains états —
+    // le bouton de rapport n'apparaît qu'en cas d'erreur.
+    const sur = (sel, ev, fn) => racine.querySelector(sel)?.addEventListener(ev, fn);
     sur('#fichier', 'click', () => racine.querySelector('#choisir').click());
     sur('#choisir', 'change', importerFichier);
     sur('#exporter', 'click', exporter);
     sur('#restaurer', 'click', () => racine.querySelector('#choisir-sauvegarde').click());
     sur('#choisir-sauvegarde', 'change', restaurer);
     sur('#copier-prompt', 'click', copierPrompt);
+    sur('#verifier', 'click', () => racine.querySelector('#choisir-verif').click());
+    sur('#choisir-verif', 'change', verifierFichier);
+    sur('#copier-erreurs', 'click', copierErreurs);
     racine.querySelector('#apercu-prompt').textContent =
       `${Math.round(PROMPT_QCM.length / 100) / 10} k caractères — le format y est décrit en entier, `
       + 'les règles qui font échouer un import comprises.';
@@ -115,15 +124,96 @@ export function creerSectionDonnees({ moteur, enregistreur }) {
     if (majes) parts.push(`${majes} mise${majes > 1 ? 's' : ''} à jour`);
 
     let html = `<div class="message ok">${echapper(fichier.name)} — ${parts.join(', ')}.</div>`;
-    if (erreurs.length) html += blocErreurs(erreurs, `${erreurs.length} question(s) ignorée(s) :`);
+    if (erreurs.length) {
+      html += blocErreurs(erreurs,
+        `${erreurs.length} question${erreurs.length > 1 ? 's' : ''} refusée${erreurs.length > 1 ? 's' : ''}, `
+        + 'les autres sont importées :');
+    }
     dessiner(html);
   }
 
+  /*
+   * Rapport d'erreurs, avec de quoi le renvoyer à l'IA qui a produit le
+   * fichier. C'est la pièce qui manquait : lire « ligne 412, aucune bonne
+   * réponse marquée » n'avance à rien quand on n'a pas écrit le fichier
+   * soi-même. Le bouton prépare une demande de correction complète, prête à
+   * coller dans la conversation d'origine.
+   */
+  let dernieresErreurs = [];
+
   function blocErreurs(erreurs, titre) {
-    const lignes = erreurs.slice(0, 40)
-      .map((e) => `<li>Ligne ${e.ligne} — ${echapper(e.message)}</li>`).join('');
-    const reste = erreurs.length > 40 ? `<li>… et ${erreurs.length - 40} autres</li>` : '';
-    return `<div class="erreurs">${echapper(titre)}<ul>${lignes}${reste}</ul></div>`;
+    dernieresErreurs = erreurs;
+    // On les montre toutes : la liste défile, et une erreur cachée est une
+    // erreur qu'on ne corrigera pas.
+    const lignes = erreurs
+      .map((e) => `<li><b>Ligne ${e.ligne}</b> — ${echapper(e.message)}</li>`).join('');
+    return `<div class="erreurs">
+      <p class="erreurs-titre">${echapper(titre)}</p>
+      <ul class="erreurs-liste">${lignes}</ul>
+      <button class="bouton secondaire" id="copier-erreurs">
+        Copier le rapport pour ton IA</button>
+    </div>`;
+  }
+
+  /** Demande de correction, à coller dans la conversation qui a produit le fichier. */
+  function rapportPourIA() {
+    const liste = dernieresErreurs
+      .map((e) => `- ligne ${e.ligne} : ${e.message}`).join('\n');
+    return `Le fichier .qcm que tu as produit contient ${dernieresErreurs.length} `
+      + `erreur${dernieresErreurs.length > 1 ? 's' : ''} de format. `
+      + `Les voici, avec le numéro de ligne du fichier que tu m'as donné :\n\n${liste}\n\n`
+      + `Rappels du format :\n`
+      + `- au moins deux propositions par question ;\n`
+      + `- au moins une proposition marquée [x], mais pas toutes ;\n`
+      + `- jamais de mélange entre les puces « - » et « 1. » dans une même question ;\n`
+      + `- sur un classement, la numérotation va de 1 à n sans trou ni doublon ;\n`
+      + `- deux questions ne peuvent pas avoir le même énoncé ;\n`
+      + `- seules @tags, @source et @bareme sont reconnues.\n\n`
+      + `Corrige ces erreurs et rends-moi le fichier COMPLET corrigé, `
+      + `sans aucun texte autour.`;
+  }
+
+  async function copierErreurs(evenement) {
+    const bouton = evenement.currentTarget;
+    try {
+      await navigator.clipboard.writeText(rapportPourIA());
+      bouton.textContent = '✓ Copié — colle-le dans ta conversation';
+      setTimeout(() => { bouton.textContent = 'Copier le rapport pour ton IA'; }, 4000);
+    } catch {
+      const zone = document.createElement('textarea');
+      zone.className = 'prompt-repli';
+      zone.readOnly = true;
+      zone.value = rapportPourIA();
+      bouton.replaceWith(zone);
+      zone.focus(); zone.select();
+    }
+  }
+
+  /**
+   * Analyse un fichier SANS rien écrire.
+   *
+   * Un import qui garde les questions valides et signale les autres est le bon
+   * comportement au quotidien, mais il empêche d'itérer : on ne peut pas
+   * corriger puis réimporter proprement, puisque la moitié est déjà entrée.
+   * D'où ce mode d'essai, à employer sur un fichier fraîchement sorti d'une IA.
+   */
+  async function verifierFichier(evenement) {
+    const fichier = evenement.target.files?.[0];
+    evenement.target.value = '';
+    if (!fichier) return;
+
+    const { cartes, erreurs } = analyser((await fichier.text()).trim());
+    const sections = new Set(cartes.map((c) => c.section || 'Sans série')).size;
+    const sansExplication = cartes.filter((c) => !c.explication).length;
+
+    let html = `<div class="message ${erreurs.length ? 'attention' : 'ok'}">
+      ${echapper(fichier.name)} — ${cartes.length} question${cartes.length > 1 ? 's' : ''} valide${cartes.length > 1 ? 's' : ''}
+      dans ${sections} section${sections > 1 ? 's' : ''}${
+      erreurs.length ? `, <b>${erreurs.length} refusée${erreurs.length > 1 ? 's' : ''}</b>` : ''}.
+      ${sansExplication ? `<br>${sansExplication} sans explication.` : ''}
+      <br><em>Rien n'a été importé.</em></div>`;
+    if (erreurs.length) html += blocErreurs(erreurs, 'À corriger :');
+    dessiner(html);
   }
 
   const echapper = (t) => String(t)
