@@ -9,7 +9,7 @@ commande est celui qui tournera tel quel dans le navigateur (PWA).
 
 ```
 npm start             # lance l'application  →  http://localhost:8123
-npm test              # 194 tests
+npm test              # 211 tests
 npm run expliquer     # trace une carte pas à pas, pour comprendre
 npm run simuler       # 6 mois de révisions simulées, avec groupe témoin
 npm run balayage      # règle un paramètre par l'expérience
@@ -35,11 +35,26 @@ certificat.
 ### Deux façons de travailler
 
 - **Ce qui est dû** — la répétition espacée proprement dite : le moteur pioche
-  dans toutes les séries ce qui risque d'être oublié aujourd'hui. C'est ce mode
-  qui fait mémoriser.
-- **Une série précise** — du bachotage assumé : tout le chapitre, y compris ce
-  qui n'est pas encore dû, et sans le quota quotidien de nouvelles cartes.
-  Légitime avant un examen, mais ce n'est pas la même chose.
+  partout ce qui risque d'être oublié aujourd'hui. C'est ce mode qui fait
+  mémoriser.
+- **Un recueil, ou une de ses séries** — du bachotage assumé : tout le fichier
+  ou tout le chapitre, y compris ce qui n'est pas encore dû, et sans le quota
+  quotidien de nouvelles cartes. Légitime avant un examen, mais ce n'est pas la
+  même chose.
+
+Chaque fichier importé devient un **recueil**, dépliable sur ses séries. Sans ce
+niveau, quinze chapitres d'un même document noieraient ceux d'un autre et rien
+ne dirait d'où ils viennent.
+
+L'ordre des questions comme celui des propositions est **rebrassé à chaque
+séance**. Sans cela, relancer une série reposait exactement les mêmes questions
+dans le même ordre, et l'on finissait par retenir la suite plutôt que le
+contenu.
+
+Quand il n'y a rien à faire, l'écran dit **pourquoi** — quota de découvertes
+épuisé, ou tout est replanifié — avec le compte du jour et la prochaine
+échéance. « Rien à réviser » sans explication ressemble à une panne, et l'on
+tourne le réglage sans effet visible.
 
 ### Deux modes
 
@@ -69,9 +84,18 @@ la transparence, pas une saisie.
 ### Données
 
 Tout vit dans IndexedDB, sur l'appareil. Aucun serveur, aucun compte. La
-synchronisation téléphone ↔ PC passe par l'export/import d'un fichier JSON
-depuis l'onglet « Cartes ». L'écriture est différée puis forcée dès que
+synchronisation téléphone ↔ PC passe par l'export/import d'un fichier JSON,
+en tête des réglages. L'écriture est différée puis forcée dès que
 l'application passe en arrière-plan — moment où le système peut la tuer.
+
+**Deux bases distinctes**, et non deux tables : `revisions` et `millionnaire`.
+Effacer les questions du jeu ne peut donc pas, structurellement, toucher à des
+mois d'historique de révision. Les sauvegardes sont séparées elles aussi.
+
+Les onglets sont de vrais onglets : chaque vue garde son conteneur, monté une
+seule fois. On retrouve la vue telle qu'on l'a laissée — recueils dépliés,
+position de défilement — et une génération de questions lancée dans l'onglet
+Jeu se poursuit pendant qu'on consulte ses progrès ailleurs.
 
 ## Pourquoi
 
@@ -92,6 +116,8 @@ fluidité du rappel. Autant s'en servir.
 | `src/stats.js` | Rétention, calibration, points faibles |
 | `src/moteur.js` | Façade unique appelée par l'interface |
 | `src/jeu.js` | Le jeu — échelle, paliers, tirage. Étanche au moteur de révision |
+| `app/prompt-qcm.js` | Le prompt qui fait fabriquer un `.qcm` par une IA |
+| `app/jeu/agent.js` | Génération des variantes, une fois pour toutes |
 
 ### Le modèle de mémoire
 
@@ -204,6 +230,30 @@ avec les numéros de ligne. L'identifiant d'une carte dérive du texte de la
 question — corriger une proposition ou une explication **conserve l'historique
 de révision**, reformuler la question crée une nouvelle carte.
 
+### Fabriquer un `.qcm` à partir de ses cours
+
+Le format n'a d'intérêt que si l'on peut en produire. Les réglages proposent un
+**prompt de 9 000 signes, copiable d'un bouton** : on le colle dans l'IA de son
+choix, on joint son document, on récupère le fichier.
+
+Il décrit la grammaire entière, y compris les six règles qui font rejeter un
+import — chacune avec sa raison, car un modèle respecte bien mieux une
+contrainte dont il comprend l'objet. Il demande aussi de regrouper par thème
+plutôt que par ordre d'apparition, et de n'écrire que ce qui figure dans le
+document : l'application ancre durablement ce qu'elle présente, y compris une
+erreur.
+
+La boucle se referme côté application :
+
+| | |
+|---|---|
+| **Vérifier sans importer** | analyse et rend son verdict sans rien écrire — indispensable pour itérer, un import partiel empêchant de recommencer proprement |
+| **Copier le rapport pour ton IA** | prépare une demande de correction : les erreurs avec leurs lignes, les règles rappelées, la consigne de rendre le fichier entier |
+
+Des tests analysent l'exemple du prompt avec le vrai parseur et vérifient que
+les barèmes cités existent encore. Sans eux, prompt et parseur dériveraient en
+silence et l'on recevrait des fichiers refusés sans savoir pourquoi.
+
 ## Le jeu — « Le Millionnaire »
 
 Un second système, **volontairement étanche** au premier : aucune date de
@@ -235,7 +285,9 @@ La partie ne s'arrête qu'au sommet, ou quand on quitte : c'est un jeu
 d'escalade, pas d'élimination.
 
 Chronomètre de 20 s, 30 s puis 45 s selon le rang — un calcul de sous-réseau
-demande dix secondes rien que pour être lu. Il se fige pendant un joker.
+demande dix secondes rien que pour être lu. Ces trois durées se règlent depuis
+l'engrenage de l'onglet Jeu ; **zéro vaut « aucune limite »**. Le chronomètre
+se fige pendant un joker.
 Trois jokers : **50:50**, **changer de question**, **indice**. Pas d'« appel à
 un ami » ni d'« avis du public » : aucun équivalent honnête hors ligne, et
 simuler un sondage en le faisant passer pour de l'information serait un
@@ -308,12 +360,18 @@ du rendement sans rien apporter. La dispersion réelle des temps de réponse est
 large — elle vient de la mémoire, pas du bruit moteur. On ne garde qu'un
 plancher de 100 ms contre les distributions dégénérées.
 
+## Déploiement
+
+Rien à construire : `vercel.json` sert le dossier tel quel et redirige `/` vers
+`/app/`. Il impose aussi un `Cache-Control: no-cache` sur le service worker —
+sans quoi une version périmée resterait collée chez les visiteurs.
+
 ## Reste à faire
 
 - [ ] Vérifier les poids FSRS contre l'implémentation de référence
 - [ ] `calibration.js` — réajuster les poids sur l'historique de l'utilisateur
-- [ ] Convertisseur depuis les fichiers de QCM existants
+- [ ] Une seconde passe de vérification sur les variantes « analyser », les
+      seules où le modèle raisonne au lieu de reformuler
+- [ ] Supprimer un recueil depuis l'interface — aujourd'hui c'est tout ou rien
 - [ ] Icônes PNG (le manifeste n'a que du SVG ; suffisant sur Chrome, à
       compléter pour une installation iOS soignée)
-- [ ] Réglages dans l'interface (nouvelles cartes par jour, ordre, rétention
-      visée) — aujourd'hui figés dans `REGLAGES_PLAN`
