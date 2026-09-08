@@ -77,9 +77,6 @@ export function creerVueAccueil({ moteur, lancerSeance, rafraichirOnglets }) {
 
       <h3>Tes recueils</h3>
       <ul class="recueils">${recueils.map(ligneRecueil).join('')}</ul>
-      <p class="aide">Lancer un recueil ou une série reprend TOUT son contenu,
-      même ce qui n'est pas encore dû. Utile pour bachoter avant un examen ;
-      « Aujourd'hui » reste le mode qui fait réellement mémoriser.</p>
     `;
 
     /*
