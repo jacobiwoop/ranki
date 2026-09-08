@@ -36,6 +36,9 @@ let explication = '';
  */
 function lancerChrono(secondes) {
   arreterChrono();
+  // 0 seconde = aucune limite : on masque le cadran plutôt que d'afficher un
+  // compte à rebours figé, qui laisserait croire à une panne.
+  if (!secondes) { $('chrono').hidden = true; restant = Infinity; return; }
   restant = secondes;
   $('chrono').hidden = false;
   peindreChrono(secondes, secondes);
@@ -352,6 +355,7 @@ if (!etat.banque?.length) {
   $('arret').textContent = 'Retour';
   $('arret').onclick = () => { window.location.href = '../'; };
 } else {
-  partie = new Partie(etat.banque, vues, (etat.parties ?? 0) + 1, grainePour(String(Date.now())));
+  partie = new Partie(etat.banque, vues, (etat.parties ?? 0) + 1,
+                      grainePour(String(Date.now())), etat.reglages ?? {});
   dessiner();
 }

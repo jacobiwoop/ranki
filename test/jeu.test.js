@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   DIFFICULTE_DU_RANG, ECHELLE, PALIERS, Partie, RESULTAT,
-  SECONDES_DU_RANG, classer, tirer,
+  SECONDES_DEFAUT, SECONDES_DU_RANG, classer, tirer,
 } from '../src/jeu.js';
 
 /** Banque factice : `parNiveau` questions pour chaque difficulté de 1 à 5. */
@@ -257,4 +257,37 @@ test('deux parties d\'affilée ne rejouent pas les mêmes questions', () => {
 
   const communes = idsUn.filter((id) => idsDeux.includes(id));
   assert.equal(communes.length, 0, `${communes.length} question(s) rejouée(s)`);
+});
+
+test('les durées du chronomètre sont réglables', () => {
+  const perso = [10, 15, 60];
+  assert.equal(SECONDES_DU_RANG(0, perso), 10);
+  assert.equal(SECONDES_DU_RANG(4, perso), 10);
+  assert.equal(SECONDES_DU_RANG(5, perso), 15);
+  assert.equal(SECONDES_DU_RANG(9, perso), 15);
+  assert.equal(SECONDES_DU_RANG(10, perso), 60);
+  assert.equal(SECONDES_DU_RANG(14, perso), 60);
+});
+
+test('une durée absurde retombe sur la valeur par défaut', () => {
+  // Une sauvegarde corrompue ou tronquée ne doit pas rendre le jeu injouable.
+  for (const mauvais of [null, undefined, [], [1, 2], ['a', 'b', 'c'], [-5, -5, -5]]) {
+    assert.equal(SECONDES_DU_RANG(0, mauvais), SECONDES_DEFAUT[0], JSON.stringify(mauvais));
+  }
+});
+
+test('zéro seconde est une valeur valable : aucune limite', () => {
+  assert.equal(SECONDES_DU_RANG(0, [0, 0, 0]), 0);
+});
+
+test('la partie applique les durées reçues', () => {
+  const p = new Partie(banque(), new Map(), 1, 1, { secondes: [7, 8, 9] });
+  assert.equal(p.secondes(), 7);
+  for (let i = 0; i < 5; i++) p.repondre(p.question.bonne);
+  assert.equal(p.secondes(), 8, 'le rang 6 doit passer à la deuxième tranche');
+});
+
+test('sans réglage, la partie garde les durées par défaut', () => {
+  const p = new Partie(banque(), new Map(), 1);
+  assert.equal(p.secondes(), SECONDES_DEFAUT[0]);
 });

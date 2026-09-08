@@ -496,3 +496,50 @@ pre {
 .erreurs-liste li { margin-bottom: 4px; }
 .erreurs-liste b { font-variant-numeric: tabular-nums; }
 .erreurs .bouton { margin-top: 12px; }
+
+/* ---------- Titre avec action à droite ---------- */
+
+.titre-action { display: flex; align-items: center; gap: 12px; }
+.titre-action h2 { flex: 1; margin: 0; }
+
+.icone-reglage {
+  flex: none; width: 38px; height: 38px;
+  display: grid; place-items: center;
+  font-size: 19px; line-height: 1;
+  color: var(--discret); background: none;
+  border: 1px solid var(--bord); border-radius: 10px;
+  cursor: pointer;
+  transition: transform .2s ease, color .15s, border-color .15s;
+}
+.icone-reglage:hover { color: var(--texte); border-color: var(--discret); }
+.icone-reglage.actif {
+  color: var(--accent); border-color: var(--accent);
+  transform: rotate(60deg);
+}
+
+/* ---------- Réglages du jeu ---------- */
+
+.reglages-jeu {
+  margin: 16px 0 4px; padding: 16px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bord); border-radius: var(--rayon);
+}
+.reglages-jeu h3 { margin-top: 0; }
+
+.reglage-duree {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 0; border-top: 1px solid var(--bord);
+}
+.reglage-duree label { flex: 1; font-size: 14.5px; cursor: pointer; }
+.reglage-duree label b { display: block; font-size: 15px; }
+.reglage-duree label span { font-size: 13px; color: var(--discret); }
+
+.champ-duree { flex: none; display: flex; align-items: baseline; gap: 5px; }
+.champ-duree input {
+  width: 74px; padding: 9px 10px;
+  font: inherit; font-size: 16px; text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte); background: var(--fond);
+  border: 1px solid var(--bord); border-radius: 9px;
+}
+.champ-duree .unite { font-size: 14px; color: var(--discret); }

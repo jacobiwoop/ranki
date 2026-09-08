@@ -8,6 +8,7 @@
 
 import { ETAT_VIDE, ecrire, effacer, lire } from '../jeu/stockage-jeu.js';
 import { MODELE_DEFAUT, enrichir } from '../jeu/agent.js';
+import { SECONDES_DEFAUT } from '../../src/jeu.js';
 
 const CLE_API = 'millionnaire.cle';
 
@@ -15,6 +16,19 @@ export function creerVueJeu({ moteur }) {
   let racine = null;
   let etat = ETAT_VIDE;
   let enCours = null;   // AbortController pendant une génération
+  let reglagesOuverts = false;
+
+  /** Durées du chronomètre, par tranche de rangs. */
+  const secondes = () => {
+    const s = etat.reglages?.secondes;
+    return Array.isArray(s) && s.length === 3 ? s : [...SECONDES_DEFAUT];
+  };
+
+  const TRANCHES = [
+    { titre: 'Rangs 1 à 5', detail: 'Définitions et faits directs.' },
+    { titre: 'Rangs 6 à 10', detail: 'Raisonnement court, pièges classiques.' },
+    { titre: 'Rangs 11 à 15', detail: 'Calculs, diagnostics. Ces énoncés sont longs à lire.' },
+  ];
 
   async function monter(element) {
     racine = element;
@@ -50,8 +64,34 @@ export function creerVueJeu({ moteur }) {
     const parties = etat.parties ?? 0;
     const meilleur = (etat.historique ?? []).reduce((m, h) => Math.max(m, h.gain), 0);
 
+    const sec = secondes();
     racine.innerHTML = `
-      <h2>Le Millionnaire</h2>
+      <div class="titre-action">
+        <h2>Le Millionnaire</h2>
+        <button class="icone-reglage ${reglagesOuverts ? 'actif' : ''}" id="ouvrir-reglages"
+                aria-label="Réglages du jeu" title="Réglages du jeu">⚙</button>
+      </div>
+
+      ${reglagesOuverts ? `
+        <div class="reglages-jeu">
+          <h3>Temps de réflexion</h3>
+          <p class="consigne">Le chronomètre couvre la lecture, la réflexion et
+          la validation. Il se fige pendant un joker. <b>0 = aucune limite.</b></p>
+          ${TRANCHES.map((tr, i) => `
+            <div class="reglage-duree">
+              <label for="sec-${i}">
+                <b>${tr.titre}</b>
+                <span>${tr.detail}</span>
+              </label>
+              <div class="champ-duree">
+                <input type="number" id="sec-${i}" data-tranche="${i}"
+                       min="0" max="300" step="5" value="${sec[i]}">
+                <span class="unite">s</span>
+              </div>
+            </div>`).join('')}
+          <button class="bouton secondaire" id="secondes-defaut">Revenir aux valeurs par défaut
+            (${SECONDES_DEFAUT.join(' · ')} s)</button>
+        </div>` : ''}
 
       ${pretes === 0 ? `
         <div class="vide">
@@ -121,6 +161,24 @@ export function creerVueJeu({ moteur }) {
 
     const sur = (sel, ev, fn) => racine.querySelector(sel)?.addEventListener(ev, fn);
     sur('#jouer', 'click', () => { window.location.href = 'jeu/'; });
+    sur('#ouvrir-reglages', 'click', () => { reglagesOuverts = !reglagesOuverts; dessiner(); });
+    racine.querySelectorAll('[data-tranche]').forEach((champ) => {
+      champ.addEventListener('change', async () => {
+        // On borne à la saisie plutôt qu'à l'usage : l'utilisateur voit tout de
+        // suite la valeur retenue au lieu de croire qu'un 9999 a été accepté.
+        const valeur = Math.min(300, Math.max(0, Math.round(Number(champ.value) || 0)));
+        champ.value = String(valeur);
+        const s = secondes();
+        s[Number(champ.dataset.tranche)] = valeur;
+        etat.reglages = { ...etat.reglages, secondes: s };
+        await ecrire(etat);
+      });
+    });
+    sur('#secondes-defaut', 'click', async () => {
+      etat.reglages = { ...etat.reglages, secondes: [...SECONDES_DEFAUT] };
+      await ecrire(etat);
+      dessiner();
+    });
     sur('#cle', 'change', (e) => {
       try { localStorage.setItem(CLE_API, e.target.value.trim()); } catch { /* mode privé */ }
     });

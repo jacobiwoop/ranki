@@ -28,14 +28,30 @@ export const ECHELLE = [
 export const PALIERS = [5, 10];
 
 /**
- * Temps de réflexion par rang, en secondes.
+ * Temps de réflexion par tranche de rangs, en secondes.
  *
  * Un chrono unique serait injuste : une question de difficulté 5 comme
  * « ce poste en /26 joint-il cette adresse ? » demande dix secondes rien que
  * pour être lue, avant tout calcul. On perdrait le million sur un défaut de
- * lecture et non de connaissance.
+ * lecture et non de connaissance. D'où trois paliers, réglables.
+ *
+ * Une valeur nulle supprime le chronomètre sur la tranche concernée.
  */
-export const SECONDES_DU_RANG = (rang) => (rang < 5 ? 20 : rang < 10 ? 30 : 45);
+export const SECONDES_DEFAUT = [20, 30, 45];
+
+/** Tranche de rangs à laquelle appartient un rang : 1-5, 6-10, puis 11-15. */
+export const TRANCHE_DU_RANG = (rang) => (rang < 5 ? 0 : rang < 10 ? 1 : 2);
+
+/**
+ * On valide le tableau ENTIER, pas la seule case demandée : un tableau tronqué
+ * à deux valeurs serait sinon accepté pour les rangs bas et rejeté pour les
+ * rangs hauts, produisant un jeu à moitié réglé sur une sauvegarde corrompue.
+ */
+const secondesValides = (s) => Array.isArray(s) && s.length === SECONDES_DEFAUT.length
+  && s.every((v) => Number.isFinite(v) && v >= 0);
+
+export const SECONDES_DU_RANG = (rang, secondes = SECONDES_DEFAUT) =>
+  (secondesValides(secondes) ? secondes : SECONDES_DEFAUT)[TRANCHE_DU_RANG(rang)];
 
 /** Niveau visé par un rang, à titre indicatif : trois rangs par niveau. */
 export const DIFFICULTE_DU_RANG = (rang) => Math.floor(rang / 3) + 1;
@@ -147,9 +163,11 @@ export class Partie {
    * @param {Map<string, number>} vues  historique, modifié au fil de la partie
    * @param {number} numero  numéro de cette partie, sert d'horodatage aux vues
    * @param {number} graine
+   * @param {{secondes?: number[]}} [reglages] durées par tranche de rangs
    */
-  constructor(banque, vues, numero, graine = 1) {
+  constructor(banque, vues, numero, graine = 1, reglages = {}) {
     this.banque = banque;
+    this.reglages = { secondes: SECONDES_DEFAUT, ...reglages };
     this.tranches = classer(banque);
     this.vues = vues;
     this.numero = numero;
@@ -191,7 +209,7 @@ export class Partie {
   }
 
   secondes() {
-    return SECONDES_DU_RANG(this.rang);
+    return SECONDES_DU_RANG(this.rang, this.reglages.secondes);
   }
 
   /** Pose la question du rang courant. */
