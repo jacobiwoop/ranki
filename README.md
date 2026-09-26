@@ -279,6 +279,24 @@ connaissance extérieure :
 L'opération se fait **une fois** : ensuite le jeu tourne hors ligne, sans clé.
 Le résultat s'exporte, pour générer sur un PC et jouer sur un téléphone.
 
+### Une banque prête à jouer
+
+`exemples/millionnaire-tc.json` est le résultat de cette génération sur
+`exemples/recueil-tc.qcm`, **déjà fait** : onglet Jeu → *Importer*, et on joue
+sans clé API ni le moindre appel réseau.
+
+**3 115 questions**, issues des 638 du recueil :
+
+| Procédé | Questions |
+|---|---|
+| *originale* (les 563 cartes qui avaient déjà 4 propositions) | 563 |
+| ① durcir · ② retourner · ③ appliquer · ④ analyser | 638 chacun |
+
+Difficultés 1 à 5 réparties 244 / 1 075 / 992 / 667 / 137, ce qui donne quinze
+rangs de 207 ou 208 questions — aucun rang à court de matière. Le fichier est
+passé au vrai moteur avant d'être versé ici : 3 115 identifiants uniques, zéro
+question mal formée, et une partie parfaite jouée jusqu'à 1 000 000 €.
+
 ### Les règles
 
 Quinze rangs, de 100 € à 1 000 000 €, et **trois rangs par niveau de
